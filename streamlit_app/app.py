@@ -4,7 +4,7 @@ from pathlib import Path
 import yaml
 
 st.set_page_config(
-    page_title="Multi-Domain Churn MLOps",
+    page_title="ChurnOps Platform",
     page_icon="🌍",
     layout="wide",
     initial_sidebar_state="expanded",
@@ -47,8 +47,8 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-st.title("🌍 Multi-Domain Enterprise AI Architecture")
-st.markdown("<p class='big-font'>Predictive AI Control Center across 8 massive global industries.</p>", unsafe_allow_html=True)
+st.title("🌍 ChurnOps — Customer Churn Platform")
+st.markdown("<p class='big-font'>Machine Learning AI Predictive Control Center across 8 massive global industries.</p>", unsafe_allow_html=True)
 
 # Domain Selector
 st.markdown("### 1️⃣ Active Industry Domain")

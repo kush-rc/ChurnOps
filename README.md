@@ -1,4 +1,4 @@
-# 🌍 Multi-Domain Enterprise MLOps Architecture: Churn Prediction
+# 🌍 ChurnOps — MLOps Customer Churn Prediction Platform
 
 ![Python Version](https://img.shields.io/badge/python-3.10%2B-blue)
 ![MLflow](https://img.shields.io/badge/MLflow-Tracking-green)
