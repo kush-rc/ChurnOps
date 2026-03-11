@@ -1,0 +1,49 @@
+# Drift Detection & Monitoring Configuration
+monitoring:
+  drift:
+    # Reference data for comparison
+    reference_data: "data/reference/reference_data.parquet"
+
+    # Detection thresholds
+    psi_threshold: 0.2          # Population Stability Index
+    ks_threshold: 0.05          # Kolmogorov-Smirnov p-value
+    chi2_threshold: 0.05        # Chi-squared p-value (categorical)
+    wasserstein_threshold: 0.1  # Wasserstein distance
+
+    # Check frequency
+    check_interval_minutes: 60
+
+    # Features to monitor
+    monitor_all_features: true
+    critical_features:
+      - "tenure"
+      - "MonthlyCharges"
+      - "Contract"
+      - "InternetService"
+
+  # Performance monitoring
+  performance:
+    # Sliding window for performance calculation
+    window_size: 1000  # predictions
+    min_samples: 100
+
+    # Alert thresholds
+    auc_drop_threshold: 0.05      # Alert if AUC drops by 5%
+    accuracy_drop_threshold: 0.05
+    f1_drop_threshold: 0.05
+
+  # Auto-retraining triggers
+  retraining:
+    enabled: true
+    trigger: "drift"  # drift, scheduled, performance_drop
+    min_retrain_interval_hours: 24
+    auto_promote: false  # Require manual promotion
+
+  # Alerting
+  alerts:
+    enabled: true
+    channels:
+      - type: "log"
+        level: "WARNING"
+      - type: "file"
+        path: "reports/alerts.json"

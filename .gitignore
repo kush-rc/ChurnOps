@@ -1,0 +1,79 @@
+# ===== Python =====
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+dist/
+build/
+*.egg
+
+# ===== Virtual Environment =====
+venv/
+.venv/
+env/
+
+# ===== IDE =====
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# ===== OS =====
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# ===== Jupyter =====
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# ===== Data (managed by DVC) =====
+data/raw/*.csv
+data/raw/*.xlsx
+data/processed/*.parquet
+data/features/*.parquet
+data/reference/*.parquet
+!/data/raw/.gitkeep
+!/data/processed/.gitkeep
+!/data/features/.gitkeep
+!/data/reference/.gitkeep
+
+# ===== MLflow =====
+mlruns/
+mlartifacts/
+mlflow.db
+
+# ===== DVC =====
+*.dvc
+/data/*.dvc
+
+# ===== Docker =====
+*.log
+
+# ===== Monitoring =====
+monitoring/evidently/reports/*.html
+monitoring/evidently/reports/*.json
+
+# ===== Environment =====
+.env
+.env.local
+.env.production
+
+# ===== Test/Coverage Reports =====
+reports/
+htmlcov/
+.coverage
+coverage.xml
+*.cover
+
+# ===== Great Expectations =====
+great_expectations/uncommitted/
+
+# ===== Misc =====
+*.bak
+*.tmp
+*.temp
+*.cache
+.prefect/

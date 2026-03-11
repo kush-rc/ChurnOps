@@ -1,0 +1,18 @@
+dataset:
+  name: "saas"
+  filename: "saas_churn_massive.csv"
+  source: "local"
+  target: "Churn"
+  target_positive_label: "Yes"
+  id_column: "customerID"
+  categorical_features:
+    - "BillingCycle"
+  numerical_features:
+    - "LoginFrequency"
+    - "FeaturesUsed"
+    - "SupportTickets"
+    - "TeamSize"
+  preprocessing:
+    handle_missing: "median"
+    encode_strategy: "onehot"
+    scale_strategy: "standard"

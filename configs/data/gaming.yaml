@@ -1,0 +1,18 @@
+dataset:
+  name: "gaming"
+  filename: "gaming_churn_massive.csv"
+  source: "local"
+  target: "Churn"
+  target_positive_label: "Yes"
+  id_column: "customerID"
+  categorical_features: []
+  numerical_features:
+    - "DailyActiveMinutes"
+    - "InAppPurchasesUSD"
+    - "WinRate"
+    - "SocialConnections"
+    - "LevelProgress"
+  preprocessing:
+    handle_missing: "median"
+    encode_strategy: "onehot"
+    scale_strategy: "standard"

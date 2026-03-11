@@ -1,0 +1,43 @@
+# ============================================================
+# Main Project Configuration
+# ============================================================
+
+project:
+  name: "churn-prediction-mlops"
+  version: "1.0.0"
+  description: "MLOps Pipeline for Customer Churn Prediction"
+  random_seed: 42
+
+# Active dataset to use for training
+active_dataset: "telco"  # Options: telco, bank, ecommerce
+
+# Paths
+paths:
+  data_raw: "data/raw"
+  data_processed: "data/processed"
+  data_features: "data/features"
+  data_reference: "data/reference"
+  models: "models"
+  reports: "reports"
+  mlruns: "mlruns"
+
+# MLflow configuration
+mlflow:
+  tracking_uri: "sqlite:///mlflow.db"
+  experiment_name: "churn-prediction"
+  artifact_location: "./mlartifacts"
+
+# API configuration
+api:
+  host: "0.0.0.0"
+  port: 8000
+  debug: false
+  cors_origins:
+    - "http://localhost:3000"
+    - "http://localhost:8501"
+
+# Logging
+logging:
+  level: "INFO"
+  format: "json"
+  file: "logs/app.log"

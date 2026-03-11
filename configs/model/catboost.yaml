@@ -1,0 +1,25 @@
+# CatBoost Model Configuration
+model:
+  name: "catboost"
+  class: "catboost.CatBoostClassifier"
+
+  params:
+    iterations: 300
+    depth: 6
+    learning_rate: 0.1
+    l2_leaf_reg: 3.0
+    border_count: 128
+    auto_class_weights: "Balanced"  # Handle class imbalance
+    task_type: "GPU"                # Utilizing RTX 4060
+    verbose: 0
+    random_seed: 42
+    thread_count: -1
+
+  tuning:
+    n_trials: 50
+    search_space:
+      iterations: [100, 500]
+      depth: [3, 10]
+      learning_rate: [0.01, 0.3]
+      l2_leaf_reg: [1.0, 10.0]
+      border_count: [32, 255]

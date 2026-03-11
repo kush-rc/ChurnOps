@@ -1,0 +1,18 @@
+dataset:
+  name: "hospitality"
+  filename: "hospitality_churn_massive.csv"
+  source: "local"
+  target: "Churn"
+  target_positive_label: "Yes"
+  id_column: "customerID"
+  categorical_features:
+    - "CityType"
+  numerical_features:
+    - "BookingFrequency"
+    - "AverageRating"
+    - "Complaints"
+    - "LoyaltyPoints"
+  preprocessing:
+    handle_missing: "median"
+    encode_strategy: "onehot"
+    scale_strategy: "standard"

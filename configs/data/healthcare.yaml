@@ -1,0 +1,18 @@
+dataset:
+  name: "healthcare"
+  filename: "healthcare_churn_massive.csv"
+  source: "local"
+  target: "Churn"
+  target_positive_label: "Yes"
+  id_column: "customerID"
+  categorical_features:
+    - "PremiumRegularity"
+  numerical_features:
+    - "ClaimsHistory"
+    - "Age"
+    - "HealthScore"
+    - "TenureYears"
+  preprocessing:
+    handle_missing: "median"
+    encode_strategy: "onehot"
+    scale_strategy: "standard"

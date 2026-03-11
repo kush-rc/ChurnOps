@@ -1,0 +1,18 @@
+dataset:
+  name: "banking"
+  filename: "banking_churn_massive.csv"
+  source: "local"
+  target: "Churn"
+  target_positive_label: "Yes"
+  id_column: "customerID"
+  categorical_features:
+    - "LoanStatus"
+  numerical_features:
+    - "AccountBalance"
+    - "TransactionFrequency"
+    - "CreditScore"
+    - "ProductCount"
+  preprocessing:
+    handle_missing: "median"
+    encode_strategy: "onehot"
+    scale_strategy: "standard"

@@ -1,0 +1,47 @@
+# Training Configuration
+training:
+  # Data splitting
+  test_size: 0.2
+  validation_size: 0.15
+  stratify: true
+  random_state: 42
+
+  # Cross-validation
+  cv_folds: 5
+  cv_scoring: "roc_auc"
+
+  # Class imbalance handling
+  imbalance_strategy: "smote"  # Options: smote, adasyn, borderline_smote, none
+  smote_sampling_strategy: 0.8  # Ratio of minority to majority
+
+  # Models to train
+  models:
+    - "logistic_regression"
+    - "random_forest"
+    - "xgboost"
+    - "lightgbm"
+    - "catboost"
+    - "neural_net"
+
+  # Evaluation metrics
+  primary_metric: "roc_auc"
+  metrics:
+    - "accuracy"
+    - "precision"
+    - "recall"
+    - "f1"
+    - "roc_auc"
+    - "average_precision"  # PR-AUC
+    - "log_loss"
+
+  # Model quality gate
+  quality_gate:
+    min_roc_auc: 0.80
+    min_f1: 0.60
+    max_log_loss: 0.50
+
+  # Feature selection
+  feature_selection:
+    enabled: true
+    method: "importance"  # importance, rfe, mutual_info
+    top_k: 30  # Keep top K features

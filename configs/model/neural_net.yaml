@@ -1,0 +1,25 @@
+# Neural Network (MLP) Model Configuration
+model:
+  name: "neural_net"
+  class: "sklearn.neural_network.MLPClassifier"
+
+  params:
+    hidden_layer_sizes: [128, 64, 32]
+    activation: "relu"
+    solver: "adam"
+    alpha: 0.001
+    batch_size: 64
+    learning_rate: "adaptive"
+    learning_rate_init: 0.001
+    max_iter: 500
+    early_stopping: true
+    n_iter_no_change: 15
+    random_state: 42
+
+  tuning:
+    n_trials: 30
+    search_space:
+      hidden_layer_sizes: [[64, 32], [128, 64], [128, 64, 32], [256, 128, 64]]
+      alpha: [0.0001, 0.01]
+      learning_rate_init: [0.0005, 0.01]
+      batch_size: [32, 128]

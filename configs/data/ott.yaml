@@ -1,0 +1,18 @@
+dataset:
+  name: "ott"
+  filename: "ott_churn_massive.csv"
+  source: "local"
+  target: "Churn"
+  target_positive_label: "Yes"
+  id_column: "customerID"
+  categorical_features:
+    - "GenrePreference"
+    - "PlanType"
+  numerical_features:
+    - "WatchHours"
+    - "LoginFrequency"
+    - "PaymentFailures"
+  preprocessing:
+    handle_missing: "median"
+    encode_strategy: "onehot"
+    scale_strategy: "standard"

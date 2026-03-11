@@ -1,0 +1,18 @@
+dataset:
+  name: "ecommerce"
+  filename: "ecommerce_churn_massive.csv"
+  source: "local"
+  target: "Churn"
+  target_positive_label: "Yes"
+  id_column: "customerID"
+  categorical_features:
+    - "DiscountUsage"
+  numerical_features:
+    - "OrderFrequency"
+    - "DaysSinceLastPurchase"
+    - "Returns"
+    - "AppActivityScore"
+  preprocessing:
+    handle_missing: "median"
+    encode_strategy: "onehot"
+    scale_strategy: "standard"
