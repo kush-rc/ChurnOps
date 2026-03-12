@@ -29,10 +29,10 @@ dvc>=3.30.0
 dvc-s3>=3.0.0          # Optional: for future S3 support
 
 # ---------- Data Validation ----------
-great-expectations>=0.18.0
+# great-expectations>=0.18.0  # Commented out to prevent Streamlit Cloud Numpy/Altair version conflict
 
 # ---------- Workflow Orchestration ----------
-prefect>=2.14.0
+# prefect>=2.14.0 # Skipped for pure UI deployment (reduces memory overhead on Streamlit Cloud)
 
 # ---------- API Serving ----------
 fastapi>=0.104.0
@@ -47,7 +47,7 @@ evidently>=0.4.0
 # ---------- Interactive Demo ----------
 streamlit>=1.29.0
 plotly>=5.18.0
-altair>=5.0.0
+altair
 
 # ---------- Data Formats ----------
 pyarrow>=14.0.0        # Parquet support
