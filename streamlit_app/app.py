@@ -132,4 +132,3 @@ with col2:
     """)
 
 st.markdown("---")
-st.caption("Forged with ❤️ via Enterprise MLOps and NVIDIA GPU Acceleration")
