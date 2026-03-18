@@ -6,14 +6,14 @@ import {
   Cpu, 
   Dna, 
   Activity, 
-  ExternalLink, 
   CheckCircle2, 
   Server,
   Zap,
   Globe,
+  Terminal,
   X
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 
 export default function Dashboard() {
   const { domain } = useDomain();
@@ -166,76 +166,56 @@ export default function Dashboard() {
       <div className="enterprise-card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
           <h4 style={{ marginBottom: 4 }}>Need professional deployment?</h4>
-          <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>This entire system is pre-configured for Docker orchestration.</p>
+          <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>This entire system is open-source and pre-configured for Docker orchestration.</p>
         </div>
         <button className="btn btn-primary" onClick={() => setShowDeployModal(true)}>
-          <ExternalLink size={16} /> Deploy to Cloud
+          <Server size={16} /> Deploy to Cloud
         </button>
       </div>
 
-      {/* Deployment Console Modal */}
-      <AnimatePresence>
-        {showDeployModal && (
-          <div className="modal-overlay" onClick={() => setShowDeployModal(false)}>
-            <motion.div 
-              initial={{ opacity: 0, scale: 0.9, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="enterprise-card deploy-modal" 
-              onClick={e => e.stopPropagation()}
-              style={{ maxWidth: 500, width: '90%', padding: 32 }}
+      {/* Docker Deployment Modal */}
+      {showDeployModal && (
+        <div className="modal-backdrop" onClick={() => setShowDeployModal(false)} style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, 
+          background: 'rgba(0, 0, 0, 0.5)', backdropFilter: 'blur(4px)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000
+        }}>
+          <div className="enterprise-card" onClick={e => e.stopPropagation()} style={{
+            width: '100%', maxWidth: 600, padding: 32, position: 'relative'
+          }}>
+            <button 
+              onClick={() => setShowDeployModal(false)}
+              style={{ position: 'absolute', top: 16, right: 16, background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}
             >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-                <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: 12 }}>
-                  <Server size={20} color="var(--accent-primary)" /> Deployment Console
-                </h3>
-                <button className="btn-icon" onClick={() => setShowDeployModal(false)}><X size={18} /></button>
+              <X size={20} />
+            </button>
+            <h3 style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16, fontSize: '1.25rem' }}>
+              <Server color="var(--accent-primary)" size={24} /> 
+              Docker Cloud Deployment
+            </h3>
+            <p style={{ color: 'var(--text-secondary)', marginBottom: 24, lineHeight: 1.6 }}>
+              <strong>"Pre-configured for Docker orchestration"</strong> means this entire application (the React frontend, FastAPI backend, and Machine Learning models) is packaged into isolated containers.
+              <br /><br />
+              Because it includes a <code style={{ background: 'var(--bg-input)', padding: '2px 6px', borderRadius: 4 }}>docker-compose.yml</code> file, you don't need to configure Node.js, Python, or manage complex dependencies on your servers. It can be instantly deployed to any cloud provider (AWS, GCP, Azure, DigitalOcean) that supports Docker.
+            </p>
+            
+            <div style={{ background: '#0F172A', borderRadius: 8, padding: 20, border: '1px solid #334155' }}>
+              <div style={{ color: '#94A3B8', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
+                <Terminal size={14} /> Deployment Command
               </div>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-                <div className="deploy-service-card">
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                      <Zap size={16} color="var(--accent-primary)" />
-                      <span style={{ fontWeight: 600 }}>Backend Engine</span>
-                    </div>
-                    <span className="status-badge online">ACTIVE (RENDER)</span>
-                  </div>
-                  <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: 8 }}>
-                    FastAPI + Python 3.10 | Model Bundle: <strong>{domain.toUpperCase()}</strong>
-                  </p>
-                  <a href="https://render.com" target="_blank" rel="noreferrer" className="deploy-link">
-                    View Render Console <ExternalLink size={12} />
-                  </a>
-                </div>
-
-                <div className="deploy-service-card">
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                      <Globe size={16} color="var(--accent-success)" />
-                      <span style={{ fontWeight: 600 }}>Frontend UI</span>
-                    </div>
-                    <span className="status-badge online">ACTIVE (VERCEL)</span>
-                  </div>
-                  <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: 8 }}>
-                    React 18 + Vite | Edge Optimized
-                  </p>
-                  <a href="https://churnops.vercel.app" target="_blank" rel="noreferrer" className="deploy-link">
-                    Open Live Platform <ExternalLink size={12} />
-                  </a>
-                </div>
-              </div>
-
-              <div style={{ marginTop: 32, padding: 16, background: 'var(--bg-input)', borderRadius: 12, border: '1px solid var(--border-subtle)' }}>
-                <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-                  <Zap size={12} style={{ marginRight: 6 }} />
-                  <strong>GitOps Active:</strong> Your latest push is being orchestrated. Changes to <code>main</code> trigger automatic re-deployment of all microservices.
-                </p>
-              </div>
-            </motion.div>
+              <code style={{ color: '#E2E8F0', fontSize: '0.9rem', display: 'block' }}>
+                <span style={{ color: '#60A5FA' }}>git clone</span> https://github.com/kush-rc/ChurnOps.git<br/>
+                <span style={{ color: '#60A5FA' }}>cd</span> ChurnOps<br/>
+                <span style={{ color: '#60A5FA' }}>docker-compose</span> up -d --build
+              </code>
+            </div>
+            
+            <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: 24, textAlign: 'center' }}>
+              This will spin up both the API (port 8000) and the Frontend (port 3000) simultaneously.
+            </p>
           </div>
-        )}
-      </AnimatePresence>
+        </div>
+      )}
     </motion.div>
   );
 }
