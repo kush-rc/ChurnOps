@@ -149,8 +149,19 @@ export default function BatchAnalysis() {
           </div>
 
           {error && (
-            <div style={{ marginTop: 16, color: 'var(--accent-danger)', display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.875rem' }}>
-              <AlertTriangle size={16} /> {error}
+            <div className="enterprise-card" style={{ marginTop: 24, padding: 16, border: '1px solid rgba(239, 68, 68, 0.2)', background: 'rgba(239, 68, 68, 0.05)' }}>
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+                <AlertTriangle size={20} color="var(--accent-danger)" style={{ marginTop: 2 }} />
+                <div>
+                  <div style={{ color: 'var(--accent-danger)', fontWeight: 600, marginBottom: 4 }}>Validation Failed</div>
+                  <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+                    {error}
+                  </div>
+                  <div style={{ marginTop: 12, fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                    Tip: Ensure your CSV headers match the required fields for the <strong>{domain.toUpperCase()}</strong> domain. You can use the reference file in <code>data/reference/</code> as a guide.
+                  </div>
+                </div>
+              </div>
             </div>
           )}
 

@@ -187,6 +187,36 @@ async def predict_upload(
             raise HTTPException(status_code=400, detail="CSV file is empty")
 
         predictor = get_predictor(domain)
+        expected_cols = predictor._extract_model_feature_names() or []
+        
+        # 1. Map columns case-insensitively and check coverage
+        df_cols = [c.strip().lower() for c in df.columns]
+        expected_lower = [c.lower() for c in expected_cols]
+        
+        found_cols = [c for c in expected_lower if c in df_cols]
+        missing_cols = [c for c in expected_cols if c.lower() not in df_cols]
+        
+        coverage = len(found_cols) / len(expected_cols) if expected_cols else 1.0
+        
+        # 🧪 Safety Threshold: If < 50% features match, it's likely the wrong file
+        if coverage < 0.5:
+            error_msg = (
+                f"Invalid CSV format for domain: {domain}. "
+                f"Found only {len(found_cols)} out of {len(expected_cols)} required features ({coverage:.1%}). "
+                f"Missing critical fields: {', '.join(missing_cols[:5])}..."
+            )
+            logger.warning(f"Batch upload rejected: {error_msg}")
+            raise HTTPException(status_code=400, detail=error_msg)
+
+        # 2. Rename columns to match model exactly (case-insensitive fix)
+        mapping = {}
+        for col in df.columns:
+            for exp in expected_cols:
+                if col.strip().lower() == exp.lower():
+                    mapping[col] = exp
+                    break
+        
+        df = df.rename(columns=mapping)
 
         # Run predictions for each row
         all_results = []
