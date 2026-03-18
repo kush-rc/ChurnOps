@@ -1,0 +1,109 @@
+============================= test session starts =============================
+platform win32 -- Python 3.10.11, pytest-9.0.2, pluggy-1.6.0 -- C:\Users\Kush Chhunchha\AppData\Local\Programs\Python\Python310\python.exe
+cachedir: .pytest_cache
+rootdir: C:\Users\Kush Chhunchha\Desktop\anti_projects\churn-prediction-mlops
+configfile: pyproject.toml
+plugins: anyio-4.12.0, cov-7.0.0
+collecting ... collected 46 items
+
+tests/unit/test_data_ingest.py::TestDataIngest::test_sample_data_has_expected_columns PASSED [  2%]
+tests/unit/test_data_ingest.py::TestDataIngest::test_sample_data_not_empty PASSED [  4%]
+tests/unit/test_data_ingest.py::TestDataIngest::test_sample_data_has_target PASSED [  6%]
+tests/unit/test_demo_model.py::TestDemoPredictor::test_predict_returns_valid_structure[telco] PASSED [  8%]
+tests/unit/test_demo_model.py::TestDemoPredictor::test_predict_returns_valid_structure[banking] PASSED [ 10%]
+tests/unit/test_demo_model.py::TestDemoPredictor::test_predict_returns_valid_structure[ecommerce] PASSED [ 13%]
+tests/unit/test_demo_model.py::TestDemoPredictor::test_predict_returns_valid_structure[gaming] PASSED [ 15%]
+tests/unit/test_demo_model.py::TestDemoPredictor::test_predict_returns_valid_structure[ott] PASSED [ 17%]
+tests/unit/test_demo_model.py::TestDemoPredictor::test_predict_returns_valid_structure[healthcare] PASSED [ 19%]
+tests/unit/test_demo_model.py::TestDemoPredictor::test_predict_returns_valid_structure[saas] PASSED [ 21%]
+tests/unit/test_demo_model.py::TestDemoPredictor::test_predict_returns_valid_structure[hospitality] PASSED [ 23%]
+tests/unit/test_demo_model.py::TestDemoPredictor::test_predict_probability_changes_with_input[telco] PASSED [ 26%]
+tests/unit/test_demo_model.py::TestDemoPredictor::test_predict_probability_changes_with_input[banking] PASSED [ 28%]
+tests/unit/test_demo_model.py::TestDemoPredictor::test_predict_probability_changes_with_input[ecommerce] PASSED [ 30%]
+tests/unit/test_demo_model.py::TestDemoPredictor::test_predict_probability_changes_with_input[gaming] PASSED [ 32%]
+tests/unit/test_demo_model.py::TestDemoPredictor::test_predict_probability_changes_with_input[ott] PASSED [ 34%]
+tests/unit/test_demo_model.py::TestDemoPredictor::test_predict_probability_changes_with_input[healthcare] PASSED [ 36%]
+tests/unit/test_demo_model.py::TestDemoPredictor::test_predict_probability_changes_with_input[saas] PASSED [ 39%]
+tests/unit/test_demo_model.py::TestDemoPredictor::test_predict_probability_changes_with_input[hospitality] PASSED [ 41%]
+tests/unit/test_demo_model.py::TestDemoPredictor::test_get_feature_importances[telco] PASSED [ 43%]
+tests/unit/test_demo_model.py::TestDemoPredictor::test_get_feature_importances[banking] PASSED [ 45%]
+tests/unit/test_demo_model.py::TestDemoPredictor::test_get_feature_importances[ecommerce] PASSED [ 47%]
+tests/unit/test_demo_model.py::TestDemoPredictor::test_get_feature_importances[gaming] PASSED [ 50%]
+tests/unit/test_demo_model.py::TestDemoPredictor::test_get_feature_importances[ott] PASSED [ 52%]
+tests/unit/test_demo_model.py::TestDemoPredictor::test_get_feature_importances[healthcare] PASSED [ 54%]
+tests/unit/test_demo_model.py::TestDemoPredictor::test_get_feature_importances[saas] PASSED [ 56%]
+tests/unit/test_demo_model.py::TestDemoPredictor::test_get_feature_importances[hospitality] PASSED [ 58%]
+tests/unit/test_demo_model.py::TestDemoPredictor::test_unknown_domain_raises_error PASSED [ 60%]
+tests/unit/test_demo_model.py::TestDemoPredictor::test_model_caching PASSED [ 63%]
+tests/unit/test_demo_model.py::TestDemoPredictor::test_map_form_fields PASSED [ 65%]
+tests/unit/test_evaluate.py::TestModelEvaluation::test_evaluate_returns_all_metrics PASSED [ 67%]
+tests/unit/test_evaluate.py::TestModelEvaluation::test_metrics_in_valid_range PASSED [ 69%]
+tests/unit/test_evaluate.py::TestModelEvaluation::test_quality_gate_pass PASSED [ 71%]
+tests/unit/test_evaluate.py::TestModelEvaluation::test_quality_gate_fail PASSED [ 73%]
+tests/unit/test_features.py::TestFeatureEngineering::test_features_output_has_more_columns PASSED [ 76%]
+tests/unit/test_features.py::TestFeatureEngineering::test_no_null_features PASSED [ 78%]
+tests/unit/test_predict.py::TestPrediction::test_telco_prediction_output_format PASSED [ 80%]
+tests/unit/test_predict.py::TestPrediction::test_high_risk_customer_has_elevated_probability PASSED [ 82%]
+tests/unit/test_predict.py::TestPrediction::test_prediction_handles_missing_features PASSED [ 84%]
+tests/unit/test_predict.py::TestPrediction::test_banking_prediction PASSED [ 86%]
+tests/unit/test_preprocess.py::TestPreprocessor::test_remove_duplicates PASSED [ 89%]
+tests/unit/test_preprocess.py::TestPreprocessor::test_encode_target_binary PASSED [ 91%]
+tests/unit/test_preprocess.py::TestPreprocessor::test_handle_missing_values PASSED [ 93%]
+tests/unit/test_train.py::TestModelTraining::test_random_forest_trains PASSED [ 95%]
+tests/unit/test_train.py::TestModelTraining::test_predictions_are_binary PASSED [ 97%]
+tests/unit/test_train.py::TestModelTraining::test_predict_proba_in_range PASSED [100%]
+ERROR: Coverage failure: total of 27 is less than fail-under=70
+
+
+============================== warnings summary ===============================
+tests/unit/test_evaluate.py::TestModelEvaluation::test_evaluate_returns_all_metrics
+tests/unit/test_evaluate.py::TestModelEvaluation::test_evaluate_returns_all_metrics
+tests/unit/test_evaluate.py::TestModelEvaluation::test_metrics_in_valid_range
+tests/unit/test_evaluate.py::TestModelEvaluation::test_metrics_in_valid_range
+  C:\Users\Kush Chhunchha\AppData\Local\Programs\Python\Python310\lib\site-packages\sklearn\base.py:465: UserWarning: X does not have valid feature names, but RandomForestClassifier was fitted with feature names
+    warnings.warn(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=============================== tests coverage ================================
+______________ coverage: platform win32, python 3.10.11-final-0 _______________
+
+Name                                    Stmts   Miss  Cover   Missing
+---------------------------------------------------------------------
+src\__init__.py                             2      0   100%
+src\api\__init__.py                         0      0   100%
+src\api\dependencies.py                     5      5     0%   3-11
+src\api\main.py                            39     39     0%   7-87
+src\api\middleware.py                      14     14     0%   3-39
+src\api\routes\__init__.py                  0      0   100%
+src\api\routes\health.py                   10     10     0%   3-27
+src\api\routes\model_info.py                6      6     0%   3-14
+src\api\routes\monitoring.py               11     11     0%   3-37
+src\api\routes\predictions.py             126    126     0%   3-301
+src\api\schemas.py                         77     77     0%   6-155
+src\data\__init__.py                        0      0   100%
+src\data\features.py                      225    102    55%   82-85, 149-171, 175-188, 233-241, 258-263, 266, 270-272, 275-296, 304, 320, 325-328, 334, 339, 344-356, 366-370, 374-381, 386-393, 397-414
+src\data\ingest.py                         34     34     0%   8-76
+src\data\preprocess.py                    132     38    71%   53, 57, 90-91, 133-137, 141-142, 175-179, 183-190, 195-202, 206-214
+src\data\validate.py                       79     79     0%   8-169
+src\models\__init__.py                      0      0   100%
+src\models\demo_model.py                  153      3    98%   303, 384, 440
+src\models\evaluate.py                     46      4    91%   82-83, 108, 112
+src\models\explain.py                      59     59     0%   7-154
+src\models\hyperparameter_tuning.py        76     76     0%   7-134
+src\models\predict.py                     171    171     0%   7-299
+src\models\registry.py                     50     50     0%   8-119
+src\models\train.py                       119    119     0%   8-230
+src\monitoring\__init__.py                  0      0   100%
+src\monitoring\alerts.py                   40     40     0%   7-85
+src\monitoring\drift_detector.py           49     49     0%   8-126
+src\monitoring\metrics_collector.py        13     13     0%   7-76
+src\monitoring\performance_tracker.py      51     51     0%   7-111
+src\utils\__init__.py                       0      0   100%
+src\utils\config.py                        40     19    52%   22, 29, 40-41, 55-58, 63-64, 69-70, 79-85
+src\utils\helpers.py                       50     30    40%   39-53, 64-74, 86-92, 102-106
+src\utils\logging.py                       12     12     0%   8-62
+---------------------------------------------------------------------
+TOTAL                                    1689   1237    27%
+Coverage HTML written to dir reports/coverage
+FAIL Required test coverage of 70.0% not reached. Total coverage: 26.76%
+======================= 46 passed, 4 warnings in 4.38s ========================

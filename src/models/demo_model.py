@@ -345,6 +345,10 @@ class DemoPredictor:
             df[col] = le.fit_transform(df[col].astype(str))
             encoders[col] = le
 
+        # Ensure column order matches predict()
+        ordered_cols = schema["numerical"] + schema["categorical"]
+        df = df[ordered_cols]
+
         model = RandomForestClassifier(n_estimators=80, max_depth=8, random_state=42, n_jobs=-1)
         model.fit(df, y)
 

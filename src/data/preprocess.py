@@ -127,7 +127,7 @@ class DataPreprocessor:
         # Numerical: fill with median/mean
         for col in numerical:
             if col in df.columns and (df[col].isnull().any() or not self._is_fit):
-                if self._is_fit:
+                if not self._is_fit:
                     if strategy == "median":
                         self.imputation_values[col] = df[col].median()
                     elif strategy == "mean":
@@ -144,7 +144,7 @@ class DataPreprocessor:
         # Categorical: fill with mode
         for col in categorical:
             if col in df.columns and (df[col].isnull().any() or not self._is_fit):
-                if self._is_fit:
+                if not self._is_fit:
                     mode_vals = df[col].mode()
                     if len(mode_vals) > 0:
                         self.imputation_values[col] = mode_vals[0]
