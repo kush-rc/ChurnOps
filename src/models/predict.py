@@ -52,22 +52,32 @@ class ChurnPredictor:
             self.model = mlflow.pyfunc.load_model(self.model_uri)
             logger.info(f"Loaded model from: {self.model_uri}")
         else:
-            # Default to latest registered model for this domain
-            client = mlflow.tracking.MlflowClient()
-            model_name = f"{self.domain}-churn-model"
-            try:
-                latest = client.get_latest_versions(model_name, stages=["None", "Staging", "Production"])
-                if latest:
-                    # Get the absolute most recent version across all stages
-                    latest_version = sorted(latest, key=lambda v: int(v.version))[-1]
-                    self.model_uri = f"models:/{model_name}/{latest_version.version}"
-                    self.model = mlflow.pyfunc.load_model(self.model_uri)
-                    logger.info(f"Loaded latest model: {self.model_uri}")
-                else:
-                    logger.warning(f"No registered model found for {model_name}")
-            except Exception as e:
-                logger.warning(f"Could not load MLflow model for {model_name}: {e}")
-
+            # Try to load bundled deployment model first
+            bundled_path = Path(f"models/production/{self.domain}")
+            if bundled_path.exists():
+                try:
+                    self.model_uri = str(bundled_path.absolute())
+                    self.model = mlflow.pyfunc.load_model(bundled_path.as_posix())
+                    logger.info(f"Loaded bundled model from: {bundled_path}")
+                except Exception as e:
+                    logger.warning(f"Failed to load bundled model: {e}")
+            
+            # Fallback to MLflow tracking server
+            if not self.model:
+                client = mlflow.tracking.MlflowClient()
+                model_name = f"{self.domain}-churn-model"
+                try:
+                    latest = client.get_latest_versions(model_name, stages=["None", "Staging", "Production"])
+                    if latest:
+                        # Get the absolute most recent version across all stages
+                        latest_version = sorted(latest, key=lambda v: int(v.version))[-1]
+                        self.model_uri = f"models:/{model_name}/{latest_version.version}"
+                        self.model = mlflow.pyfunc.load_model(self.model_uri)
+                        logger.info(f"Loaded latest model: {self.model_uri}")
+                    else:
+                        logger.warning(f"No registered model found for {model_name}")
+                except Exception as e:
+                    logger.warning(f"Could not load MLflow model for {model_name}: {e}")
         # Load Preprocessor & Engineer States
         try:
             self.preprocessor = DataPreprocessor.load_state(self.domain)

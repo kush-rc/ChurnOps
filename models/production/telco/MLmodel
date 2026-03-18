@@ -1,0 +1,22 @@
+artifact_path: file:///C:/Users/Kush Chhunchha/Desktop/anti_projects/churn-prediction-mlops/mlruns/1/models/m-486dab9e518e4cb990c5aba096370fe6/artifacts
+flavors:
+  python_function:
+    data: model.ubj
+    env:
+      conda: conda.yaml
+      virtualenv: python_env.yaml
+    loader_module: mlflow.xgboost
+    python_version: 3.10.11
+  xgboost:
+    code: null
+    data: model.ubj
+    model_class: xgboost.sklearn.XGBRFClassifier
+    model_format: ubj
+    xgb_version: 3.2.0
+mlflow_version: 3.10.1
+model_id: m-486dab9e518e4cb990c5aba096370fe6
+model_size_bytes: 28775613
+model_uuid: m-486dab9e518e4cb990c5aba096370fe6
+prompts: null
+run_id: 0fde0e3566df4ef4ba067dd1c5e4d24f
+utc_time_created: '2026-03-16 07:31:37.673396'
