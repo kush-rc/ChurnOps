@@ -84,7 +84,7 @@ This is the REST API that serves predictions to the frontend and any external cl
 
 | File | Endpoints | Purpose |
 |------|-----------|---------|
-| `predictions.py` | `POST /predict` — Single prediction<br>`POST /predict/batch` — Batch from JSON<br>`POST /predict/upload` — Batch from CSV file<br>`POST /explain` — SHAP explanation | Core business logic — where predictions happen |
+| `predictions.py` | `POST /predict` — Single prediction<br>`POST /predict/batch` — Batch from JSON<br>`POST /predict/upload` — Batch from CSV file<br>`POST /explain` — SHAP explanation | Core business logic. Also includes **preload_all_predictors** for zero-latency model warming and robust 50%-threshold CSV validation. |
 | `health.py` | `GET /health` | Kubernetes/Docker liveness probe |
 | `model_info.py` | `GET /model/info` | Returns model name, version, metrics, feature count |
 | `monitoring.py` | `GET /monitoring/metrics` | Prometheus-compatible metrics for dashboards |
@@ -114,7 +114,7 @@ Raw CSV → ingest.py → preprocess.py → validate.py → features.py → Feat
 | File | What It Does | Why It's Important |
 |------|--------------|-------------------|
 | `train.py` | Trains 6 ML algorithms, logs everything to MLflow | Core training loop with experiment tracking |
-| `predict.py` | `ChurnPredictor` class — loads MLflow model, runs inference, computes SHAP | **The production inference engine** — used by every API endpoint |
+| `predict.py` | `ChurnPredictor` class — loads MLflow model, runs inference, computes SHAP | **The production inference engine**. Optimized to load models lazily and compute **Native SHAP** (`pred_contribs`) for millisecond interpretability with low RAM usage. |
 | `evaluate.py` | Calculates accuracy, precision, recall, F1, AUC, confusion matrix | Measures model quality objectively |
 | `hyperparameter_tuning.py` | Optuna-based Bayesian optimization for XGBoost/LightGBM | Squeezes extra performance from models |
 | `explain.py` | SHAP integration utilities | Makes predictions interpretable ("why did the model predict churn?") |
@@ -233,9 +233,9 @@ Used by the frontend's **Model Comparison** page to display results.
 
 | Page | Features |
 |------|----------|
-| `Dashboard.jsx` | Training stats, model info, infrastructure maturity, intelligence feed |
+| `Dashboard.jsx` | Training stats, model info, intelligence feed, **Dynamic Health Polling**, and **Docker Deployment Guide** |
 | `Predict.jsx` | Domain-specific forms, single prediction with probability gauge |
-| `BatchAnalysis.jsx` | CSV upload, probability histogram, risk donut, top-risk table, paginated results |
+| `BatchAnalysis.jsx` | CSV upload (with **50% feature match validation**), risk donut, paginated results |
 | `ModelComparison.jsx` | Algorithm performance comparison charts and tables |
 | `Explainability.jsx` | SHAP value visualization (positive/negative feature contributions) |
 

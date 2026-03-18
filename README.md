@@ -24,7 +24,7 @@ Customer churn (when a user stops using a product) is one of the most expensive 
 | **Experiment Tracking** | MLflow (model registry, metrics, artifacts) |
 | **Hyperparameter Tuning** | Optuna (Bayesian optimization) |
 | **API** | FastAPI + Uvicorn |
-| **Explainability** | SHAP (PermutationExplainer with caching) |
+| **Explainability** | Native SHAP (TreePath computation) for instant, low-memory inference |
 | **Frontend** | React 18 + Vite + Recharts + Framer Motion + Lucide Icons |
 | **Containerization** | Docker + Docker Compose |
 | **CI/CD** | GitHub Actions (lint → test → build → deploy) |
@@ -140,7 +140,8 @@ churn-prediction-mlops/
 
 ### Dashboard
 - Live training population stats, model ensemble info, inference health
-- Infrastructure maturity indicators and intelligence feed
+- Infrastructure maturity indicators, intelligence feed, and **Docker Deployment Guide**
+- **Dynamic System Health**: Real-time polling (every 5s) of the FastAPI backend status
 
 ### Prediction
 - Single-customer prediction with domain-specific input forms
@@ -148,15 +149,18 @@ churn-prediction-mlops/
 
 ### Batch Analysis
 - CSV upload with drag-and-drop
+- **Robust Validation**: Requires 50% feature match and uses case-insensitive column mapping
 - Probability distribution histogram, risk segmentation donut chart
 - Top-risk customer table, full paginated results with CSV export
+- *Test data provided at `data/reference/test_batch_telco.csv`*
 
 ### Model Comparison
 - Side-by-side comparison of all trained algorithms
 - Accuracy, Precision, Recall, F1, AUC metrics
 
 ### Explainability
-- Real SHAP values computed from the trained XGBoost model
+- Interpretability powered by **Native SHAP** (model-native contributions)
+- Millisecond performance with extremely low memory footprint (Render 512MB RAM safe)
 - Top positive/negative feature contributions per prediction
 
 ### Dark Mode
