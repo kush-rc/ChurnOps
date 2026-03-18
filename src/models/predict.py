@@ -6,6 +6,7 @@ Loads a trained model and makes predictions on new data.
 
 from pathlib import Path
 
+import xgboost as xgb
 import mlflow
 import numpy as np
 import pandas as pd
@@ -218,11 +219,9 @@ class ChurnPredictor:
         }
 
     def explain_single(self, features: dict) -> list[dict]:
-        """Compute exact SHAP values for a single prediction using the real ML model."""
+        """Compute SHAP values using native model methods for speed and low memory."""
         if not self.model or not self.preprocessor or not self.engineer:
             return [{"feature": "Unknown", "shap_value": 0.0}]
-
-        import shap
 
         df = pd.DataFrame([features])
         df_clean = self.preprocessor.preprocess(df)
@@ -231,10 +230,10 @@ class ChurnPredictor:
         expected_cols = self._extract_model_feature_names() or self.engineer.feature_names
         X = df_features.reindex(columns=expected_cols, fill_value=0)
 
-        # Extract the underlying XGBoost/sklearn model from the MLflow wrapper
+        # Extract the underlying model
         impl = self.model._model_impl
         underlying = None
-        for attr in ['xgb_model', 'sklearn_model', 'lgbm_model']:
+        for attr in ['xgb_model', 'sklearn_model', 'lgbm_model', 'cat_model']:
             if hasattr(impl, attr):
                 underlying = getattr(impl, attr)
                 break
@@ -242,106 +241,54 @@ class ChurnPredictor:
             underlying = impl
 
         try:
-            # ─── Strategy 1: Patch the XGBoost Booster directly ───
-            # XGBoost >= 2.0 stores base_score as '[6.9498456E-1]' in the booster
-            # config JSON, which shap's C-extension parser can't convert to float.
-            # Fix: extract the booster, save to temp JSON, fix the string, reload.
+            # ─── High Performance Strategy: Native Contribs ───
+            sv = None
+            
+            # 1. XGBoost Native
             if hasattr(underlying, 'get_booster'):
-                import json
-                import os
-                import tempfile
-
                 booster = underlying.get_booster()
+                # Fast native SHAP via predict(pred_contribs=True)
+                sv = booster.predict(xgb.DMatrix(X), pred_contribs=True)[0]
+                # XGBoost returns [contribs..., bias]
+                sv = sv[:-1] 
+            
+            # 2. LightGBM Native
+            elif 'lightgbm' in str(type(underlying)).lower():
+                sv = underlying.predict(X, pred_contrib=True)[0]
+                sv = sv[:-1] # Remove bias term
+            
+            # 3. CatBoost Native
+            elif 'catboost' in str(type(underlying)).lower():
+                sv = underlying.get_feature_importances(data=X, type='ShapValues')[0]
+                sv = sv[:-1] # Remove bias term
 
-                # Save the booster to a temp JSON file
-                tmp_path = os.path.join(tempfile.gettempdir(), '_shap_xgb_fix.json')
-                booster.save_model(tmp_path)
-
-                with open(tmp_path) as f:
-                    model_json = json.load(f)
-
-                # Fix the base_score string: '[6.9498456E-1]' -> '6.9498456E-1'
-                try:
-                    bs = model_json['learner']['learner_model_param']['base_score']
-                    if isinstance(bs, str) and ('[' in bs or ']' in bs):
-                        model_json['learner']['learner_model_param']['base_score'] = bs.replace('[', '').replace(']', '')
-
-                        with open(tmp_path, 'w') as f:
-                            json.dump(model_json, f)
-
-                        booster.load_model(tmp_path)
-                        logger.info("Patched XGBoost base_score for SHAP compatibility")
-                except (KeyError, TypeError):
-                    pass  # Not an XGBoost JSON format we expected
-
-                # Use the patched booster directly with TreeExplainer
-                explainer = shap.TreeExplainer(booster)
-                shap_values = explainer.shap_values(X)
-
-                # Handle multi-class output (list of arrays)
-                if isinstance(shap_values, list) and len(shap_values) == 2:
-                    sv = shap_values[1][0]
-                elif isinstance(shap_values, np.ndarray):
-                    sv = shap_values[0] if shap_values.ndim == 2 else shap_values
-                else:
-                    sv = shap_values[0]
-
-                if hasattr(sv, 'ndim') and sv.ndim > 1:
-                    sv = sv[:, 1]
-
+            if sv is not None:
                 importances = [
                     {"feature": str(col), "shap_value": round(float(val), 4)}
                     for col, val in zip(X.columns, sv, strict=False)
                 ]
             else:
-                # Non-XGBoost model: try TreeExplainer directly
-                explainer = shap.TreeExplainer(underlying)
-                shap_values = explainer.shap_values(X)
-
-                if isinstance(shap_values, list) and len(shap_values) == 2:
-                    sv = shap_values[1][0]
-                else:
-                    sv = shap_values[0]
-                    if hasattr(sv, 'ndim') and sv.ndim > 1:
-                        sv = sv[:, 1]
-
+                # Fallback to shap library only if native fails or unsupported
+                import shap
+                explainer = shap.Explainer(underlying.predict, X)
+                shap_values = explainer(X)
+                sv = shap_values.values[0]
+                if sv.ndim > 1: sv = sv[:, 1]
                 importances = [
                     {"feature": str(col), "shap_value": round(float(val), 4)}
                     for col, val in zip(X.columns, sv, strict=False)
                 ]
 
         except Exception as e:
-            logger.warning(f"TreeExplainer failed, falling back to PermutationExplainer: {e}")
-            try:
-                # Fallback: use predict_proba as a callable with a zero baseline
-                # Cache the explainer for subsequent requests (first call ~10s, subsequent ~0.5s)
-                if self._shap_explainer is None:
-                    predict_fn = underlying.predict_proba if hasattr(underlying, 'predict_proba') else underlying.predict
-                    self._shap_baseline = pd.DataFrame([np.zeros(len(X.columns))], columns=X.columns)
-                    self._shap_explainer = shap.Explainer(predict_fn, self._shap_baseline)
-                    logger.info("Built and cached SHAP PermutationExplainer")
-
-                shap_values_obj = self._shap_explainer(X)
-                sv = shap_values_obj.values[0]
-
-                if sv.ndim > 1:
-                    sv = sv[:, 1]
-
+            logger.warning(f"Native/SHAP failed: {e}. Falling back to global importances.")
+            # Ultimate fallback
+            if hasattr(underlying, 'feature_importances_'):
                 importances = [
-                    {"feature": str(col), "shap_value": round(float(val), 4)}
-                    for col, val in zip(X.columns, sv, strict=False)
+                    {"feature": str(col), "shap_value": round(float(imp), 4)}
+                    for col, imp in zip(X.columns, underlying.feature_importances_, strict=False)
                 ]
-            except Exception as inner_e:
-                logger.error(f"Failed to generate SHAP values: {inner_e}")
-                # Ultimate fallback: use global feature importances from the model
-                if hasattr(underlying, 'feature_importances_'):
-                    importances = [
-                        {"feature": str(col), "shap_value": round(float(imp), 4)}
-                        for col, imp in zip(X.columns, underlying.feature_importances_, strict=False)
-                    ]
-                else:
-                    return [{"feature": "Unknown", "shap_value": 0.0}]
+            else:
+                return [{"feature": "Unknown", "shap_value": 0.0}]
 
-        # Sort by absolute impact
         importances.sort(key=lambda x: abs(x["shap_value"]), reverse=True)
         return importances
