@@ -25,11 +25,11 @@ export default function Dashboard() {
     
     // Simulate live intelligence log
     const activities = [
-      "Inference engine latching to champion model...",
-      "GPU OpenCL context initialized.",
-      "MLflow registry synchronization complete.",
-      "Bayesian search space navigated for current domain.",
-      "Real-time prediction stream active."
+      "Intelligence engine warming up...",
+      "Active domain model pre-loaded into memory.",
+      "CORS security layer validated.",
+      "Memory footprint optimized for cloud instance.",
+      "Real-time inference stream active."
     ];
     
     let i = 0;
