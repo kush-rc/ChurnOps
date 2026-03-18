@@ -33,6 +33,21 @@ def get_predictor(domain: str) -> ChurnPredictor:
     return predictors[domain]
 
 
+def preload_all_predictors() -> None:
+    """Pre-load all domain predictors into memory at startup."""
+    from src.api.api import DOMAINS # Need to find where domains are defined
+    # Actually, let's just use the list from config or a hardcoded list for now 
+    # if we can't import easily.
+    domains = ["telco", "banking", "ecommerce", "gaming", "ott", "healthcare", "saas", "hospitality"]
+    logger.info(f"🔥 Pre-loading predictors for {len(domains)} domains...")
+    for domain in domains:
+        try:
+            get_predictor(domain)
+        except Exception as e:
+            logger.error(f"Failed to pre-load {domain}: {e}")
+    logger.info("✅ All predictors pre-loaded.")
+
+
 @router.get("/health")
 async def health_check():
     return {"status": "healthy", "version": "1.0.0"}

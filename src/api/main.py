@@ -20,6 +20,9 @@ async def lifespan(app: FastAPI):
     """Application lifespan: startup and shutdown events."""
     logger.info("🚀 Starting Churn Prediction API...")
     try:
+        # Pre-load all predictors to eliminate cold start latency
+        from src.api.routes.predictions import preload_all_predictors
+        preload_all_predictors()
         logger.info("✅ API is ready.")
     except Exception as e:
         logger.error(f"Error during API startup: {e}")
