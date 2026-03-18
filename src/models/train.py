@@ -62,19 +62,20 @@ class ModelTrainer:
         # Import gradient boosting models dynamically
         if model_name == "xgboost":
             from xgboost import XGBClassifier
+
             return XGBClassifier(**params)
         elif model_name == "lightgbm":
             from lightgbm import LGBMClassifier
+
             return LGBMClassifier(**params)
         elif model_name == "catboost":
             from catboost import CatBoostClassifier
+
             return CatBoostClassifier(**params)
 
         raise ValueError(f"Unknown model: {model_name}")
 
-    def _handle_imbalance(
-        self, X: np.ndarray, y: np.ndarray
-    ) -> tuple[np.ndarray, np.ndarray]:
+    def _handle_imbalance(self, X: np.ndarray, y: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
         """Apply class imbalance handling."""
         strategy = self.training_config.get("imbalance_strategy", "smote")
         sampling = self.training_config.get("smote_sampling_strategy", 0.8)
@@ -95,9 +96,7 @@ class ModelTrainer:
             return X, y
 
         X_resampled, y_resampled = sampler.fit_resample(X, y)
-        logger.info(
-            f"Applied {strategy}: {len(X)} → {len(X_resampled)} samples"
-        )
+        logger.info(f"Applied {strategy}: {len(X)} → {len(X_resampled)} samples")
         return X_resampled, y_resampled
 
     @timer
@@ -139,8 +138,7 @@ class ModelTrainer:
         for model_name in models_to_train:
             try:
                 result = self._train_single_model(
-                    model_name, X_train_balanced, y_train_balanced,
-                    X_test, y_test, primary_metric
+                    model_name, X_train_balanced, y_train_balanced, X_test, y_test, primary_metric
                 )
                 self.results.append(result)
             except Exception as e:

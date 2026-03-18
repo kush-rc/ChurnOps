@@ -6,10 +6,10 @@ Loads a trained model and makes predictions on new data.
 
 from pathlib import Path
 
-import xgboost as xgb
 import mlflow
 import numpy as np
 import pandas as pd
+import xgboost as xgb
 from loguru import logger
 
 from src.data.features import FeatureEngineer
@@ -45,6 +45,7 @@ class ChurnPredictor:
     def _load_pipeline(self) -> None:
         """Load model from MLflow and preprocessing states from disk."""
         import warnings
+
         # Suppress MLflow dependency mismatch warnings for cleaner/faster logs
         warnings.filterwarnings("ignore", category=UserWarning, module="mlflow")
 
@@ -66,7 +67,9 @@ class ChurnPredictor:
             client = mlflow.tracking.MlflowClient()
             model_name = f"{self.domain}-churn-model"
             try:
-                latest = client.get_latest_versions(model_name, stages=["None", "Staging", "Production"])
+                latest = client.get_latest_versions(
+                    model_name, stages=["None", "Staging", "Production"]
+                )
                 if latest:
                     latest_version = sorted(latest, key=lambda v: int(v.version))[-1]
                     self.model_uri = f"models:/{model_name}/{latest_version.version}"
@@ -114,17 +117,17 @@ class ChurnPredictor:
 
         # 1. Try to find the underlying model with predict_proba
         underlying = None
-        if hasattr(self.model, '_model_impl'):
+        if hasattr(self.model, "_model_impl"):
             impl = self.model._model_impl
             # Check common MLflow wrapper attributes
-            for attr in ['sklearn_model', 'xgb_model', 'lgbm_model']:
+            for attr in ["sklearn_model", "xgb_model", "lgbm_model"]:
                 if hasattr(impl, attr):
                     underlying = getattr(impl, attr)
                     break
             if not underlying:
                 underlying = impl
 
-        if underlying and hasattr(underlying, 'predict_proba'):
+        if underlying and hasattr(underlying, "predict_proba"):
             try:
                 # Try with whatever input we have (DF or Array)
                 probas = underlying.predict_proba(X)
@@ -147,24 +150,24 @@ class ChurnPredictor:
 
     def _extract_model_feature_names(self) -> list[str] | None:
         """Intelligently extract expected feature names from the model wrapper."""
-        if not self.model or not hasattr(self.model, '_model_impl'):
+        if not self.model or not hasattr(self.model, "_model_impl"):
             return None
 
         impl = self.model._model_impl
 
         # 1. Check for standard sklearn feature_names_in_
-        if hasattr(impl, 'feature_names_in_'):
+        if hasattr(impl, "feature_names_in_"):
             return list(impl.feature_names_in_)
 
         # 2. Check underlying sklearn_model or xgb_model
-        for attr in ['sklearn_model', 'xgb_model']:
+        for attr in ["sklearn_model", "xgb_model"]:
             if hasattr(impl, attr):
                 sub = getattr(impl, attr)
-                if hasattr(sub, 'feature_names_in_'):
+                if hasattr(sub, "feature_names_in_"):
                     return list(sub.feature_names_in_)
-                if hasattr(sub, 'get_booster'):
+                if hasattr(sub, "get_booster"):
                     return sub.get_booster().feature_names
-                if hasattr(sub, 'feature_names'):
+                if hasattr(sub, "feature_names"):
                     return sub.feature_names
 
         # 3. Fallback to engineer's training names
@@ -233,7 +236,7 @@ class ChurnPredictor:
         # Extract the underlying model
         impl = self.model._model_impl
         underlying = None
-        for attr in ['xgb_model', 'sklearn_model', 'lgbm_model', 'cat_model']:
+        for attr in ["xgb_model", "sklearn_model", "lgbm_model", "cat_model"]:
             if hasattr(impl, attr):
                 underlying = getattr(impl, attr)
                 break
@@ -243,24 +246,24 @@ class ChurnPredictor:
         try:
             # ─── High Performance Strategy: Native Contribs ───
             sv = None
-            
+
             # 1. XGBoost Native
-            if hasattr(underlying, 'get_booster'):
+            if hasattr(underlying, "get_booster"):
                 booster = underlying.get_booster()
                 # Fast native SHAP via predict(pred_contribs=True)
                 sv = booster.predict(xgb.DMatrix(X), pred_contribs=True)[0]
                 # XGBoost returns [contribs..., bias]
-                sv = sv[:-1] 
-            
+                sv = sv[:-1]
+
             # 2. LightGBM Native
-            elif 'lightgbm' in str(type(underlying)).lower():
+            elif "lightgbm" in str(type(underlying)).lower():
                 sv = underlying.predict(X, pred_contrib=True)[0]
-                sv = sv[:-1] # Remove bias term
-            
+                sv = sv[:-1]  # Remove bias term
+
             # 3. CatBoost Native
-            elif 'catboost' in str(type(underlying)).lower():
-                sv = underlying.get_feature_importances(data=X, type='ShapValues')[0]
-                sv = sv[:-1] # Remove bias term
+            elif "catboost" in str(type(underlying)).lower():
+                sv = underlying.get_feature_importances(data=X, type="ShapValues")[0]
+                sv = sv[:-1]  # Remove bias term
 
             if sv is not None:
                 importances = [
@@ -270,10 +273,12 @@ class ChurnPredictor:
             else:
                 # Fallback to shap library only if native fails or unsupported
                 import shap
+
                 explainer = shap.Explainer(underlying.predict, X)
                 shap_values = explainer(X)
                 sv = shap_values.values[0]
-                if sv.ndim > 1: sv = sv[:, 1]
+                if sv.ndim > 1:
+                    sv = sv[:, 1]
                 importances = [
                     {"feature": str(col), "shap_value": round(float(val), 4)}
                     for col, val in zip(X.columns, sv, strict=False)
@@ -282,7 +287,7 @@ class ChurnPredictor:
         except Exception as e:
             logger.warning(f"Native/SHAP failed: {e}. Falling back to global importances.")
             # Ultimate fallback
-            if hasattr(underlying, 'feature_importances_'):
+            if hasattr(underlying, "feature_importances_"):
                 importances = [
                     {"feature": str(col), "shap_value": round(float(imp), 4)}
                     for col, imp in zip(X.columns, underlying.feature_importances_, strict=False)

@@ -73,18 +73,14 @@ class ModelEvaluator:
 
         return metrics
 
-    def get_classification_report(
-        self, model: Any, X_test: np.ndarray, y_test: np.ndarray
-    ) -> str:
+    def get_classification_report(self, model: Any, X_test: np.ndarray, y_test: np.ndarray) -> str:
         """Get a formatted classification report.
 
         Returns:
             Formatted classification report string.
         """
         y_pred = model.predict(X_test)
-        return classification_report(
-            y_test, y_pred, target_names=["Not Churned", "Churned"]
-        )
+        return classification_report(y_test, y_pred, target_names=["Not Churned", "Churned"])
 
     def check_quality_gate(
         self, metrics: dict[str, float], thresholds: dict[str, float]

@@ -25,6 +25,7 @@ router = APIRouter()
 # Global predictor cache (domain -> ChurnPredictor)
 predictors: dict[str, ChurnPredictor] = {}
 
+
 def get_predictor(domain: str) -> ChurnPredictor:
     """Get or initialize the predictor for a domain."""
     if domain not in predictors:
@@ -36,18 +37,21 @@ def get_predictor(domain: str) -> ChurnPredictor:
 def preload_all_predictors() -> None:
     """Pre-load only the active domain predictor to save memory on Render (512MB limit)."""
     import gc
+
     from src.utils.config import get_config
-    
+
     try:
         config = get_config()
         active_domain = config.get("active_dataset", "telco")
-        
+
         logger.info(f"🔥 Pre-loading active predictor for domain: {active_domain}...")
         get_predictor(active_domain)
-        
+
         # Reclaim memory from temporary loading objects
         gc.collect()
-        logger.info("✅ Active predictor pre-loaded. Other domains will lazy-load on demand to stay under 512MB.")
+        logger.info(
+            "✅ Active predictor pre-loaded. Other domains will lazy-load on demand to stay under 512MB."
+        )
     except Exception as e:
         logger.error(f"Failed to pre-load active domain: {e}")
 
@@ -55,6 +59,7 @@ def preload_all_predictors() -> None:
 @router.get("/health")
 async def health_check():
     return {"status": "healthy", "version": "1.0.0"}
+
 
 @router.post("/predict", response_model=PredictionResponse)
 async def predict_single(
@@ -175,7 +180,7 @@ async def predict_upload(
     Returns per-row predictions plus aggregate statistics:
     probability distribution, risk segmentation, and top-risk customers.
     """
-    if not file.filename.endswith('.csv'):
+    if not file.filename.endswith(".csv"):
         raise HTTPException(status_code=400, detail="Only .csv files are accepted")
 
     try:
@@ -188,16 +193,16 @@ async def predict_upload(
 
         predictor = get_predictor(domain)
         expected_cols = predictor._extract_model_feature_names() or []
-        
+
         # 1. Map columns case-insensitively and check coverage
         df_cols = [c.strip().lower() for c in df.columns]
         expected_lower = [c.lower() for c in expected_cols]
-        
+
         found_cols = [c for c in expected_lower if c in df_cols]
         missing_cols = [c for c in expected_cols if c.lower() not in df_cols]
-        
+
         coverage = len(found_cols) / len(expected_cols) if expected_cols else 1.0
-        
+
         # 🧪 Safety Threshold: If < 50% features match, it's likely the wrong file
         if coverage < 0.5:
             error_msg = (
@@ -215,7 +220,7 @@ async def predict_upload(
                 if col.strip().lower() == exp.lower():
                     mapping[col] = exp
                     break
-        
+
         df = df.rename(columns=mapping)
 
         # Run predictions for each row
@@ -224,22 +229,26 @@ async def predict_upload(
             features = row.dropna().to_dict()
             try:
                 result = predictor.predict_single(features)
-                all_results.append(BatchCustomerResult(
-                    row_index=int(idx) + 1,
-                    prediction=result["prediction"],
-                    churn_probability=result["churn_probability"],
-                    label=result["label"],
-                    confidence=result["confidence"],
-                ))
+                all_results.append(
+                    BatchCustomerResult(
+                        row_index=int(idx) + 1,
+                        prediction=result["prediction"],
+                        churn_probability=result["churn_probability"],
+                        label=result["label"],
+                        confidence=result["confidence"],
+                    )
+                )
             except Exception as row_err:
                 logger.warning(f"Row {idx} failed: {row_err}")
-                all_results.append(BatchCustomerResult(
-                    row_index=int(idx) + 1,
-                    prediction=0,
-                    churn_probability=0.0,
-                    label="Error",
-                    confidence=0.0,
-                ))
+                all_results.append(
+                    BatchCustomerResult(
+                        row_index=int(idx) + 1,
+                        prediction=0,
+                        churn_probability=0.0,
+                        label="Error",
+                        confidence=0.0,
+                    )
+                )
 
         # Aggregate statistics
         total = len(all_results)
@@ -248,8 +257,18 @@ async def predict_upload(
         avg_prob = sum(probs) / total if total else 0.0
 
         # Probability distribution histogram (10 bins)
-        bins = ["0-10%", "10-20%", "20-30%", "30-40%", "40-50%",
-                "50-60%", "60-70%", "70-80%", "80-90%", "90-100%"]
+        bins = [
+            "0-10%",
+            "10-20%",
+            "20-30%",
+            "30-40%",
+            "40-50%",
+            "50-60%",
+            "60-70%",
+            "70-80%",
+            "80-90%",
+            "90-100%",
+        ]
         bin_counts = [0] * 10
         for p in probs:
             idx = min(int(p * 10), 9)

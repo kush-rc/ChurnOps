@@ -34,9 +34,7 @@ class PerformanceTracker:
         self.baseline_metrics = metrics
         logger.info(f"Baseline metrics set: {metrics}")
 
-    def log_prediction(
-        self, prediction: float, actual: float | None = None
-    ) -> None:
+    def log_prediction(self, prediction: float, actual: float | None = None) -> None:
         """Log a prediction (and optionally the actual outcome)."""
         self.predictions.append(prediction)
         self.actuals.append(actual)
@@ -53,13 +51,21 @@ class PerformanceTracker:
                 "required": self.min_samples,
             }
 
-        preds = list(self.predictions)[-len(actuals_available):]
+        preds = list(self.predictions)[-len(actuals_available) :]
         binary_preds = [1 if p >= 0.5 else 0 for p in preds]
 
-        tp = sum(1 for p, a in zip(binary_preds, actuals_available, strict=False) if p == 1 and a == 1)
-        tn = sum(1 for p, a in zip(binary_preds, actuals_available, strict=False) if p == 0 and a == 0)
-        fp = sum(1 for p, a in zip(binary_preds, actuals_available, strict=False) if p == 1 and a == 0)
-        fn = sum(1 for p, a in zip(binary_preds, actuals_available, strict=False) if p == 0 and a == 1)
+        tp = sum(
+            1 for p, a in zip(binary_preds, actuals_available, strict=False) if p == 1 and a == 1
+        )
+        tn = sum(
+            1 for p, a in zip(binary_preds, actuals_available, strict=False) if p == 0 and a == 0
+        )
+        fp = sum(
+            1 for p, a in zip(binary_preds, actuals_available, strict=False) if p == 1 and a == 0
+        )
+        fn = sum(
+            1 for p, a in zip(binary_preds, actuals_available, strict=False) if p == 0 and a == 1
+        )
 
         total = tp + tn + fp + fn
         accuracy = (tp + tn) / total if total > 0 else 0
@@ -93,12 +99,14 @@ class PerformanceTracker:
             drop = baseline_val - current_val
 
             if drop > self.auc_threshold:
-                alerts.append({
-                    "metric": metric,
-                    "baseline": baseline_val,
-                    "current": current_val,
-                    "drop": drop,
-                })
+                alerts.append(
+                    {
+                        "metric": metric,
+                        "baseline": baseline_val,
+                        "current": current_val,
+                        "drop": drop,
+                    }
+                )
 
         return {
             "degraded": len(alerts) > 0,

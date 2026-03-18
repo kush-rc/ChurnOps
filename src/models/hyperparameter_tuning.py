@@ -25,9 +25,7 @@ class HyperparameterTuner:
         self.best_params: dict | None = None
         self.study: optuna.Study | None = None
 
-    def _create_objective(
-        self, X: np.ndarray, y: np.ndarray
-    ):
+    def _create_objective(self, X: np.ndarray, y: np.ndarray):
         """Create an Optuna objective function for the model."""
         tuning_config = self.model_config.get("tuning", {})
         search_space = tuning_config.get("search_space", {})
@@ -53,7 +51,9 @@ class HyperparameterTuner:
 
             # Cross-validate (n_jobs=1 to protect GPU VRAM, verbose=3 to show detailed progress)
             cv = StratifiedKFold(n_splits=cv_folds, shuffle=True, random_state=seed)
-            print("\n      ▶️ Evaluator: Running 5-Fold Cross Validation fold-by-fold...", flush=True)
+            print(
+                "\n      ▶️ Evaluator: Running 5-Fold Cross Validation fold-by-fold...", flush=True
+            )
             scores = cross_val_score(model, X, y, cv=cv, scoring=scoring, n_jobs=1, verbose=3)
 
             return scores.mean()
@@ -67,29 +67,33 @@ class HyperparameterTuner:
 
         if self.model_name == "xgboost":
             from xgboost import XGBClassifier
+
             return XGBClassifier(**base_params)
         elif self.model_name == "lightgbm":
             from lightgbm import LGBMClassifier
+
             return LGBMClassifier(**base_params)
         elif self.model_name == "catboost":
             from catboost import CatBoostClassifier
+
             return CatBoostClassifier(**base_params)
         elif self.model_name == "random_forest":
             from xgboost import XGBRFClassifier
+
             return XGBRFClassifier(**base_params)
         elif self.model_name == "logistic_regression":
             from sklearn.linear_model import LogisticRegression
+
             return LogisticRegression(**base_params)
         elif self.model_name == "neural_net":
             from sklearn.neural_network import MLPClassifier
+
             return MLPClassifier(**base_params)
 
         raise ValueError(f"Unknown model: {self.model_name}")
 
     @timer
-    def tune(
-        self, X: np.ndarray, y: np.ndarray, n_trials: int | None = None
-    ) -> dict:
+    def tune(self, X: np.ndarray, y: np.ndarray, n_trials: int | None = None) -> dict:
         """Run hyperparameter optimization.
 
         Args:

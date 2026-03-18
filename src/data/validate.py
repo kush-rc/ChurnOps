@@ -24,11 +24,13 @@ class DataValidator:
     def _add_result(self, check: str, passed: bool, details: str = "") -> None:
         """Record a validation check result."""
         status = "✅ PASS" if passed else "❌ FAIL"
-        self.validation_results.append({
-            "check": check,
-            "passed": passed,
-            "details": details,
-        })
+        self.validation_results.append(
+            {
+                "check": check,
+                "passed": passed,
+                "details": details,
+            }
+        )
         logger.info(f"{status} | {check}: {details}")
 
     @timer
@@ -57,18 +59,14 @@ class DataValidator:
         total = len(self.validation_results)
         n_passed = sum(1 for r in self.validation_results if r["passed"])
 
-        logger.info(f"\n{'='*50}")
+        logger.info(f"\n{'=' * 50}")
         logger.info(f"Validation: {n_passed}/{total} checks passed")
         logger.info(f"Overall: {'✅ PASSED' if passed else '❌ FAILED'}")
 
         return passed
 
     def _check_not_empty(self, df: pd.DataFrame) -> None:
-        self._add_result(
-            "DataFrame not empty",
-            len(df) > 0,
-            f"{len(df)} rows"
-        )
+        self._add_result("DataFrame not empty", len(df) > 0, f"{len(df)} rows")
 
     def _check_required_columns(self, df: pd.DataFrame) -> None:
         required = set(
@@ -80,7 +78,7 @@ class DataValidator:
         self._add_result(
             "Required columns present",
             len(missing) == 0,
-            f"Missing: {missing}" if missing else "All present"
+            f"Missing: {missing}" if missing else "All present",
         )
 
     def _check_target_column(self, df: pd.DataFrame) -> None:
@@ -88,21 +86,20 @@ class DataValidator:
         if target in df.columns:
             n_classes = df[target].nunique()
             self._add_result(
-                "Target is binary",
-                n_classes == 2,
-                f"{n_classes} unique values in '{target}'"
+                "Target is binary", n_classes == 2, f"{n_classes} unique values in '{target}'"
             )
         else:
             self._add_result("Target column exists", False, f"'{target}' not found")
 
     def _check_missing_values(self, df: pd.DataFrame) -> None:
-        missing_pct = (df.isnull().sum() / len(df) * 100)
+        missing_pct = df.isnull().sum() / len(df) * 100
         high_missing = missing_pct[missing_pct > 30]
         self._add_result(
             "No columns >30% missing",
             len(high_missing) == 0,
-            f"High missing: {dict(high_missing)}" if len(high_missing) > 0
-            else f"Max missing: {missing_pct.max():.1f}%"
+            f"High missing: {dict(high_missing)}"
+            if len(high_missing) > 0
+            else f"Max missing: {missing_pct.max():.1f}%",
         )
 
     def _check_duplicates(self, df: pd.DataFrame) -> None:
@@ -110,7 +107,7 @@ class DataValidator:
         self._add_result(
             "Duplicate rows <5%",
             n_dupes / len(df) < 0.05,
-            f"{n_dupes} duplicates ({n_dupes/len(df)*100:.1f}%)"
+            f"{n_dupes} duplicates ({n_dupes / len(df) * 100:.1f}%)",
         )
 
     def _check_data_types(self, df: pd.DataFrame) -> None:
@@ -122,7 +119,7 @@ class DataValidator:
         self._add_result(
             "Numerical columns are numeric",
             len(issues) == 0,
-            f"Non-numeric: {issues}" if issues else "All correct"
+            f"Non-numeric: {issues}" if issues else "All correct",
         )
 
     def _check_numerical_ranges(self, df: pd.DataFrame) -> None:
@@ -138,7 +135,7 @@ class DataValidator:
         self._add_result(
             "Numerical values in reasonable range",
             len(issues) == 0,
-            f"Outliers: {issues}" if issues else "All in range"
+            f"Outliers: {issues}" if issues else "All in range",
         )
 
     def _check_categorical_values(self, df: pd.DataFrame) -> None:
@@ -150,7 +147,7 @@ class DataValidator:
         self._add_result(
             "Categorical cardinality <50",
             len(issues) == 0,
-            f"High cardinality: {issues}" if issues else "All acceptable"
+            f"High cardinality: {issues}" if issues else "All acceptable",
         )
 
     def get_report(self) -> dict:

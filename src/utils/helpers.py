@@ -14,6 +14,7 @@ from loguru import logger
 
 def timer(func):
     """Decorator to log execution time of a function."""
+
     @wraps(func)
     def wrapper(*args, **kwargs):
         start = time.perf_counter()
@@ -21,6 +22,7 @@ def timer(func):
         elapsed = time.perf_counter() - start
         logger.info(f"⏱️  {func.__name__} completed in {elapsed:.2f}s")
         return result
+
     return wrapper
 
 

@@ -102,10 +102,12 @@ class DriftDetector:
         """
         column_mapping = self._get_column_mapping()
 
-        report = Report(metrics=[
-            DataDriftPreset(),
-            TargetDriftPreset(),
-        ])
+        report = Report(
+            metrics=[
+                DataDriftPreset(),
+                TargetDriftPreset(),
+            ]
+        )
         report.run(
             reference_data=reference_data,
             current_data=current_data,

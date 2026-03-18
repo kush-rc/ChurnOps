@@ -1,7 +1,6 @@
 """Unit tests for feature engineering module."""
 
 
-
 class TestFeatureEngineering:
     """Tests for feature engineering."""
 

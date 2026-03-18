@@ -9,8 +9,10 @@ from pydantic import BaseModel, Field
 
 # ---- Request Models ----
 
+
 class CustomerFeatures(BaseModel):
     """Input features for a single customer prediction."""
+
     gender: str | None = Field(None, example="Female")
     SeniorCitizen: int | None = Field(None, ge=0, le=1, example=0)
     Partner: str | None = Field(None, example="Yes")
@@ -60,13 +62,16 @@ class CustomerFeatures(BaseModel):
 
 class BatchPredictionRequest(BaseModel):
     """Request for batch predictions."""
+
     customers: list[CustomerFeatures]
 
 
 # ---- Response Models ----
 
+
 class PredictionResponse(BaseModel):
     """Response for a single prediction."""
+
     prediction: int = Field(..., description="0 = Not Churned, 1 = Churned")
     churn_probability: float = Field(..., ge=0, le=1, description="Probability of churn")
     label: str = Field(..., description="Human-readable label")
@@ -76,6 +81,7 @@ class PredictionResponse(BaseModel):
 
 class BatchPredictionResponse(BaseModel):
     """Response for batch predictions."""
+
     predictions: list[PredictionResponse]
     total: int
     churned_count: int
@@ -84,6 +90,7 @@ class BatchPredictionResponse(BaseModel):
 
 class BatchCustomerResult(BaseModel):
     """Single row result in a batch upload response."""
+
     row_index: int
     prediction: int
     churn_probability: float
@@ -93,12 +100,14 @@ class BatchCustomerResult(BaseModel):
 
 class HistogramBin(BaseModel):
     """A single histogram bin."""
+
     bin: str
     count: int
 
 
 class ConfidenceBreakdown(BaseModel):
     """Risk confidence breakdown."""
+
     low: int = 0
     medium: int = 0
     high: int = 0
@@ -106,6 +115,7 @@ class ConfidenceBreakdown(BaseModel):
 
 class BatchUploadResponse(BaseModel):
     """Response for CSV batch upload predictions."""
+
     total: int
     churned_count: int
     churn_rate: float
@@ -118,6 +128,7 @@ class BatchUploadResponse(BaseModel):
 
 class ExplanationResponse(BaseModel):
     """Response for model explanation."""
+
     prediction: PredictionResponse
     feature_importances: list[dict]
     top_positive: list[dict] = Field(description="Top features pushing toward churn")
@@ -126,6 +137,7 @@ class ExplanationResponse(BaseModel):
 
 class HealthResponse(BaseModel):
     """Health check response."""
+
     status: str
     model_loaded: bool
     version: str
@@ -134,6 +146,7 @@ class HealthResponse(BaseModel):
 
 class ModelInfoResponse(BaseModel):
     """Model information response."""
+
     model_name: str
     model_version: str | None
     stage: str | None

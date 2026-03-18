@@ -3,8 +3,9 @@ End-to-End Inference Test - Diagnose column mismatch
 """
 import sys
 import traceback
+
 import pandas as pd
-import numpy as np
+
 
 def test_inference():
     print("=" * 60)
@@ -14,8 +15,8 @@ def test_inference():
     # Step 1: Load saved pipeline states
     print("\n[1/5] Loading saved pipeline states...")
     try:
-        from src.data.preprocess import DataPreprocessor
         from src.data.features import FeatureEngineer
+        from src.data.preprocess import DataPreprocessor
 
         preprocessor = DataPreprocessor.load_state("telco")
         print(f"  OK DataPreprocessor loaded (imputation_values: {len(preprocessor.imputation_values)} cols)")
@@ -89,6 +90,7 @@ def test_inference():
     print("\n[5/5] Loading MLflow model and predicting...")
     try:
         import mlflow
+
         from src.utils.config import get_config
         config = get_config()
         mlflow.set_tracking_uri(config["mlflow"]["tracking_uri"])
@@ -114,10 +116,10 @@ def test_inference():
                         print(f"  Using run artifact: {model_uri}")
                         model = mlflow.pyfunc.load_model(model_uri)
                     else:
-                        print(f"  FAILED: No runs found")
+                        print("  FAILED: No runs found")
                         return False
                 else:
-                    print(f"  FAILED: No telco experiments found")
+                    print("  FAILED: No telco experiments found")
                     return False
         except Exception as e:
             print(f"  Could not find registered model, searching experiments: {e}")
@@ -130,10 +132,10 @@ def test_inference():
                     print(f"  Using run artifact: {model_uri}")
                     model = mlflow.pyfunc.load_model(model_uri)
                 else:
-                    print(f"  FAILED: No runs found in telco experiments")
+                    print("  FAILED: No runs found in telco experiments")
                     return False
             else:
-                print(f"  FAILED: No telco experiments found")
+                print("  FAILED: No telco experiments found")
                 return False
 
         # Check model signature
@@ -146,14 +148,14 @@ def test_inference():
                 our_set = set(our_cols)
                 missing_for_model = model_set - our_set
                 extra_for_model = our_set - model_set
-                
+
                 print(f"  Model expects {len(model_cols)} features, we have {len(our_cols)}")
                 if missing_for_model:
                     print(f"  MISMATCH - Model needs but we dont have ({len(missing_for_model)}): {sorted(missing_for_model)[:15]}")
                 if extra_for_model:
                     print(f"  MISMATCH - We have but model doesnt need ({len(extra_for_model)}): {sorted(extra_for_model)[:15]}")
                 if not missing_for_model and not extra_for_model:
-                    print(f"  OK Columns match model signature perfectly!")
+                    print("  OK Columns match model signature perfectly!")
         except Exception as e:
             print(f"  WARNING: Could not check model signature: {e}")
 

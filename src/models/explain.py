@@ -33,14 +33,16 @@ class ModelExplainer:
         model_type = type(self.model).__name__
 
         try:
-            if model_type in ["XGBClassifier", "LGBMClassifier", "CatBoostClassifier"] or model_type in ["RandomForestClassifier"]:
+            if model_type in [
+                "XGBClassifier",
+                "LGBMClassifier",
+                "CatBoostClassifier",
+            ] or model_type in ["RandomForestClassifier"]:
                 self.explainer = shap.TreeExplainer(self.model)
             else:
                 # Use KernelExplainer for any other model
                 background = shap.sample(X_train, min(100, len(X_train)))
-                self.explainer = shap.KernelExplainer(
-                    self.model.predict_proba, background
-                )
+                self.explainer = shap.KernelExplainer(self.model.predict_proba, background)
 
             logger.info(f"Created SHAP explainer for {model_type}")
         except Exception as e:
@@ -72,9 +74,7 @@ class ModelExplainer:
 
         return shap_values
 
-    def explain_single(
-        self, features: pd.DataFrame | np.ndarray
-    ) -> dict:
+    def explain_single(self, features: pd.DataFrame | np.ndarray) -> dict:
         """Explain a single prediction.
 
         Args:
@@ -111,16 +111,13 @@ class ModelExplainer:
 
         return {
             "feature_importances": [
-                {"feature": name, "shap_value": float(val)}
-                for name, val in importance[:20]
+                {"feature": name, "shap_value": float(val)} for name, val in importance[:20]
             ],
             "top_positive": [
-                {"feature": name, "shap_value": float(val)}
-                for name, val in importance if val > 0
+                {"feature": name, "shap_value": float(val)} for name, val in importance if val > 0
             ][:5],
             "top_negative": [
-                {"feature": name, "shap_value": float(val)}
-                for name, val in importance if val < 0
+                {"feature": name, "shap_value": float(val)} for name, val in importance if val < 0
             ][:5],
         }
 
@@ -147,9 +144,11 @@ class ModelExplainer:
             else:
                 feature_names = [f"feature_{i}" for i in range(X.shape[1])]
 
-        importance_df = pd.DataFrame({
-            "feature": feature_names,
-            "mean_abs_shap": np.abs(values).mean(axis=0),
-        }).sort_values("mean_abs_shap", ascending=False)
+        importance_df = pd.DataFrame(
+            {
+                "feature": feature_names,
+                "mean_abs_shap": np.abs(values).mean(axis=0),
+            }
+        ).sort_values("mean_abs_shap", ascending=False)
 
         return importance_df

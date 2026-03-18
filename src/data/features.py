@@ -94,7 +94,7 @@ class FeatureEngineer:
             df["AvgMonthlySpend"] = np.where(
                 df["tenure"] > 0,
                 df.get("TotalCharges", df["TotalRevenue"]) / df["tenure"],
-                df["MonthlyCharges"]
+                df["MonthlyCharges"],
             )
 
             # Tenure-based features
@@ -107,15 +107,20 @@ class FeatureEngineer:
 
         # Service count
         service_cols = [
-            "PhoneService", "MultipleLines", "InternetService",
-            "OnlineSecurity", "OnlineBackup", "DeviceProtection",
-            "TechSupport", "StreamingTV", "StreamingMovies"
+            "PhoneService",
+            "MultipleLines",
+            "InternetService",
+            "OnlineSecurity",
+            "OnlineBackup",
+            "DeviceProtection",
+            "TechSupport",
+            "StreamingTV",
+            "StreamingMovies",
         ]
         existing_service_cols = [c for c in service_cols if c in df.columns]
         if existing_service_cols:
             df["num_services"] = df[existing_service_cols].apply(
-                lambda row: sum(1 for v in row if v not in ["No", "No internet service", 0]),
-                axis=1
+                lambda row: sum(1 for v in row if v not in ["No", "No internet service", 0]), axis=1
             )
 
         # Security features
@@ -123,8 +128,7 @@ class FeatureEngineer:
         existing_security = [c for c in security_cols if c in df.columns]
         if existing_security:
             df["has_security_features"] = df[existing_security].apply(
-                lambda row: sum(1 for v in row if v == "Yes"),
-                axis=1
+                lambda row: sum(1 for v in row if v == "Yes"), axis=1
             )
 
         # Streaming features
@@ -132,11 +136,12 @@ class FeatureEngineer:
         existing_stream = [c for c in stream_cols if c in df.columns]
         if existing_stream:
             df["num_streaming"] = df[existing_stream].apply(
-                lambda row: sum(1 for v in row if v == "Yes"),
-                axis=1
+                lambda row: sum(1 for v in row if v == "Yes"), axis=1
             )
 
-        logger.info(f"Created {len(df.columns) - len(self.config.get('categorical_features', []))} Telco features")
+        logger.info(
+            f"Created {len(df.columns) - len(self.config.get('categorical_features', []))} Telco features"
+        )
         return df
 
     def _bank_features(self, df: pd.DataFrame) -> pd.DataFrame:
@@ -147,8 +152,9 @@ class FeatureEngineer:
 
         if "Age" in df.columns:
             df["age_group"] = pd.cut(
-                df["Age"], bins=[0, 30, 40, 50, 60, 100],
-                labels=["young", "adult", "middle", "senior", "elderly"]
+                df["Age"],
+                bins=[0, 30, 40, 50, 60, 100],
+                labels=["young", "adult", "middle", "senior", "elderly"],
             ).astype(str)
 
         if "NumOfProducts" in df.columns:
@@ -156,8 +162,9 @@ class FeatureEngineer:
 
         if "CreditScore" in df.columns:
             df["credit_score_bin"] = pd.cut(
-                df["CreditScore"], bins=[0, 580, 670, 740, 800, 900],
-                labels=["poor", "fair", "good", "very_good", "excellent"]
+                df["CreditScore"],
+                bins=[0, 580, 670, 740, 800, 900],
+                labels=["poor", "fair", "good", "very_good", "excellent"],
             ).astype(str)
 
         logger.info("Created Bank-specific features")
@@ -188,8 +195,10 @@ class FeatureEngineer:
             # Create top interaction pairs (limit to avoid explosion)
             pairs_created = 0
             for i, col1 in enumerate(numerical[:5]):
-                for col2 in numerical[i+1:6]:
-                    if pd.api.types.is_numeric_dtype(df[col1]) and pd.api.types.is_numeric_dtype(df[col2]):
+                for col2 in numerical[i + 1 : 6]:
+                    if pd.api.types.is_numeric_dtype(df[col1]) and pd.api.types.is_numeric_dtype(
+                        df[col2]
+                    ):
                         df[f"{col1}_x_{col2}"] = df[col1] * df[col2]
                         pairs_created += 1
 
@@ -207,7 +216,13 @@ class FeatureEngineer:
                     if df[col].nunique() > 10:
                         try:
                             # Fit and get bin edges
-                            binned, edges = pd.qcut(df[col], q=4, labels=["Q1", "Q2", "Q3", "Q4"], duplicates="drop", retbins=True)
+                            binned, edges = pd.qcut(
+                                df[col],
+                                q=4,
+                                labels=["Q1", "Q2", "Q3", "Q4"],
+                                duplicates="drop",
+                                retbins=True,
+                            )
 
                             # Ensure outer edges cover everything during inference
                             edges[0] = -np.inf
@@ -221,9 +236,11 @@ class FeatureEngineer:
                     # Inference: Use saved bin edges
                     if col in self.bin_edges:
                         edges = self.bin_edges[col]
-                        labels = ["Q1", "Q2", "Q3", "Q4"][:len(edges)-1]
+                        labels = ["Q1", "Q2", "Q3", "Q4"][: len(edges) - 1]
 
-                        df[f"{col}_bin"] = pd.cut(df[col], bins=edges, labels=labels, include_lowest=True).astype(str)
+                        df[f"{col}_bin"] = pd.cut(
+                            df[col], bins=edges, labels=labels, include_lowest=True
+                        ).astype(str)
 
         return df
 
@@ -232,8 +249,11 @@ class FeatureEngineer:
         strategy = self.preprocessing_config.get("encode_strategy", "onehot")
 
         if not self._is_fit:
-            categorical = [c for c in df.select_dtypes(include=["object", "category"]).columns
-                           if c != self.config["target"]]
+            categorical = [
+                c
+                for c in df.select_dtypes(include=["object", "category"]).columns
+                if c != self.config["target"]
+            ]
         else:
             if strategy == "onehot" and self.ohe is not None:
                 categorical = list(self.ohe.feature_names_in_)
@@ -262,7 +282,15 @@ class FeatureEngineer:
                     le = self.label_encoders.get(col)
                     if le:
                         known_classes = set(le.classes_)
-                        processed_col = df[col].astype(str).map(lambda s, kc=known_classes, def_val=le.classes_[0]: s if s in kc else def_val)
+                        processed_col = (
+                            df[col]
+                            .astype(str)
+                            .map(
+                                lambda s, kc=known_classes, def_val=le.classes_[0]: (
+                                    s if s in kc else def_val
+                                )
+                            )
+                        )
                         df[col] = le.transform(processed_col)
 
             logger.info(f"Label encoded {len(categorical)} columns")
@@ -344,6 +372,7 @@ class FeatureEngineer:
     def save_state(self) -> Path:
         """Save the fitted engineer state using joblib."""
         import joblib
+
         output_dir = get_path("models") / "preprocessors"
         output_dir.mkdir(parents=True, exist_ok=True)
         path = output_dir / f"{self.config['name']}_engineer.joblib"
@@ -355,6 +384,7 @@ class FeatureEngineer:
     def load_state(cls, dataset_name: str):
         """Load a fitted engineer state."""
         import joblib
+
         path = get_path("models") / "preprocessors" / f"{dataset_name}_engineer.joblib"
         if not path.exists():
             raise FileNotFoundError(f"Engineer state not found at {path}")

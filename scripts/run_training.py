@@ -1,3 +1,4 @@
+# ruff: noqa: E402
 """
 Phase 2: Model Training & Experiment Tracking
 ==============================================
@@ -5,11 +6,10 @@ Trains 6 ML models on the Telco churn dataset, logs everything
 to MLflow, compares results, and registers the best model.
 """
 
-import sys
-import os
-import warnings
 import json
+import sys
 import time
+import warnings
 from pathlib import Path
 
 warnings.filterwarnings("ignore")
@@ -18,25 +18,34 @@ warnings.filterwarnings("ignore")
 project_root = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(project_root))
 
-import numpy as np
-import pandas as pd
 import mlflow
 import mlflow.sklearn
 import mlflow.xgboost
-from sklearn.model_selection import train_test_split, StratifiedKFold, cross_val_score
-from sklearn.metrics import (
-    accuracy_score, precision_score, recall_score, f1_score,
-    roc_auc_score, average_precision_score, log_loss,
-    confusion_matrix, classification_report, roc_curve, precision_recall_curve
-)
-from sklearn.linear_model import LogisticRegression
-from sklearn.neural_network import MLPClassifier
-from xgboost import XGBClassifier, XGBRFClassifier
-from lightgbm import LGBMClassifier
+import pandas as pd
 from catboost import CatBoostClassifier
 from imblearn.over_sampling import SMOTE
+from lightgbm import LGBMClassifier
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import (
+    accuracy_score,
+    average_precision_score,
+    confusion_matrix,
+    f1_score,
+    log_loss,
+    precision_score,
+    recall_score,
+    roc_auc_score,
+)
+from sklearn.model_selection import StratifiedKFold, cross_val_score, train_test_split
+from xgboost import XGBClassifier, XGBRFClassifier
 
-from src.utils.config import get_config, get_dataset_config, get_path, get_training_config, get_model_config
+from src.utils.config import (
+    get_config,
+    get_dataset_config,
+    get_model_config,
+    get_path,
+    get_training_config,
+)
 
 
 def load_features(dataset_name: str = "telco"):
@@ -223,11 +232,12 @@ def train_single_model(name, model_info, X_train, y_train, X_test, y_test):
 
 import argparse
 
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--dataset", type=str, default="telco", help="Dataset to train on (e.g. telco, ecommerce, saas)")
     args = parser.parse_args()
-    
+
     dataset_name = args.dataset
 
     print("=" * 65)
@@ -322,7 +332,7 @@ def main():
     print(f"\n  📄 Results saved to: {results_path}")
 
     # Register best model
-    print(f"\n📦 [5/5] Registering best model in MLflow...")
+    print("\n📦 [5/5] Registering best model in MLflow...")
     try:
         model_uri = f"runs:/{best['run_id']}/model"
         model_name = f"{dataset_name}-churn-model"
@@ -333,7 +343,7 @@ def main():
 
     print("\n" + "=" * 65)
     print("  ✅ PHASE 2 COMPLETE!")
-    print(f"  View experiments: mlflow server --port 5000")
+    print("  View experiments: mlflow server --port 5000")
     print("=" * 65)
 
 

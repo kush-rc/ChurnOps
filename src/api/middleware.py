@@ -21,8 +21,7 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
 
         # Log request
         logger.info(
-            f"{request.method} {request.url.path} "
-            f"→ {response.status_code} ({elapsed:.3f}s)"
+            f"{request.method} {request.url.path} → {response.status_code} ({elapsed:.3f}s)"
         )
 
         # Update Prometheus metrics

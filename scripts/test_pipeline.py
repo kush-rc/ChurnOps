@@ -1,8 +1,8 @@
 """Quick test script to verify the data pipeline works end-to-end."""
 
+import os
 import sys
 import warnings
-import os
 
 warnings.filterwarnings("ignore")
 
@@ -12,17 +12,19 @@ sys.path.insert(0, project_root)
 
 # Disable loguru to keep output clean
 from loguru import logger
+
 logger.remove()
 logger.add(sys.stderr, level="ERROR")
 
 
 import argparse
 
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--dataset", type=str, default="telco", help="Dataset to test (e.g. telco, ecommerce, saas)")
     args = parser.parse_args()
-    
+
     dataset_name = args.dataset
 
     print("=" * 60)

@@ -23,11 +23,21 @@ DOMAIN_SCHEMAS: dict[str, dict[str, Any]] = {
     "telco": {
         "numerical": ["SeniorCitizen", "tenure", "MonthlyCharges"],
         "categorical": [
-            "gender", "Partner", "Dependents", "PhoneService",
-            "MultipleLines", "InternetService", "OnlineSecurity",
-            "OnlineBackup", "DeviceProtection", "TechSupport",
-            "StreamingTV", "StreamingMovies", "Contract",
-            "PaperlessBilling", "PaymentMethod",
+            "gender",
+            "Partner",
+            "Dependents",
+            "PhoneService",
+            "MultipleLines",
+            "InternetService",
+            "OnlineSecurity",
+            "OnlineBackup",
+            "DeviceProtection",
+            "TechSupport",
+            "StreamingTV",
+            "StreamingMovies",
+            "Contract",
+            "PaperlessBilling",
+            "PaymentMethod",
         ],
     },
     "banking": {
@@ -39,7 +49,13 @@ DOMAIN_SCHEMAS: dict[str, dict[str, Any]] = {
         "categorical": ["DiscountUsage"],
     },
     "gaming": {
-        "numerical": ["WinRate", "DailyActiveMinutes", "SocialConnections", "LevelProgress", "InAppPurchasesUSD"],
+        "numerical": [
+            "WinRate",
+            "DailyActiveMinutes",
+            "SocialConnections",
+            "LevelProgress",
+            "InAppPurchasesUSD",
+        ],
         "categorical": [],
     },
     "ott": {
@@ -63,49 +79,72 @@ DOMAIN_SCHEMAS: dict[str, dict[str, Any]] = {
 # Mapping from Streamlit form field names → internal schema field names
 FORM_FIELD_MAP: dict[str, dict[str, str]] = {
     "telco": {
-        "gender": "gender", "senior": "SeniorCitizen",
-        "partner": "Partner", "dependents": "Dependents",
-        "tenure": "tenure", "monthly_charges": "MonthlyCharges",
-        "contract": "Contract", "payment": "PaymentMethod",
-        "paperless": "PaperlessBilling", "phone_service": "PhoneService",
-        "multiple_lines": "MultipleLines", "internet_service": "InternetService",
-        "online_security": "OnlineSecurity", "online_backup": "OnlineBackup",
-        "device_protection": "DeviceProtection", "tech_support": "TechSupport",
-        "streaming_tv": "StreamingTV", "streaming_movies": "StreamingMovies",
+        "gender": "gender",
+        "senior": "SeniorCitizen",
+        "partner": "Partner",
+        "dependents": "Dependents",
+        "tenure": "tenure",
+        "monthly_charges": "MonthlyCharges",
+        "contract": "Contract",
+        "payment": "PaymentMethod",
+        "paperless": "PaperlessBilling",
+        "phone_service": "PhoneService",
+        "multiple_lines": "MultipleLines",
+        "internet_service": "InternetService",
+        "online_security": "OnlineSecurity",
+        "online_backup": "OnlineBackup",
+        "device_protection": "DeviceProtection",
+        "tech_support": "TechSupport",
+        "streaming_tv": "StreamingTV",
+        "streaming_movies": "StreamingMovies",
     },
     "banking": {
-        "credit_score": "CreditScore", "balance": "AccountBalance",
-        "loan_status": "LoanStatus", "txn_freq": "TransactionFrequency",
+        "credit_score": "CreditScore",
+        "balance": "AccountBalance",
+        "loan_status": "LoanStatus",
+        "txn_freq": "TransactionFrequency",
         "products": "ProductCount",
     },
     "ecommerce": {
-        "app_activity": "AppActivityScore", "returns": "Returns",
-        "discount_usage": "DiscountUsage", "order_freq": "OrderFrequency",
+        "app_activity": "AppActivityScore",
+        "returns": "Returns",
+        "discount_usage": "DiscountUsage",
+        "order_freq": "OrderFrequency",
         "days_inactive": "DaysSinceLastPurchase",
     },
     "gaming": {
-        "win_rate": "WinRate", "daily_hours": "DailyActiveMinutes",
-        "social_connections": "SocialConnections", "level": "LevelProgress",
+        "win_rate": "WinRate",
+        "daily_hours": "DailyActiveMinutes",
+        "social_connections": "SocialConnections",
+        "level": "LevelProgress",
         "in_app_purchases": "InAppPurchasesUSD",
     },
     "ott": {
-        "label_genre": "GenrePreference", "watch_time": "WatchHours",
-        "ad_tier": "PlanType", "login_freq": "LoginFrequency",
+        "label_genre": "GenrePreference",
+        "watch_time": "WatchHours",
+        "ad_tier": "PlanType",
+        "login_freq": "LoginFrequency",
         "failed_payments": "PaymentFailures",
     },
     "healthcare": {
-        "age": "Age", "health_score": "HealthScore",
-        "tenure": "TenureYears", "claims": "ClaimsHistory",
+        "age": "Age",
+        "health_score": "HealthScore",
+        "tenure": "TenureYears",
+        "claims": "ClaimsHistory",
         "premium_reg": "PremiumRegularity",
     },
     "saas": {
-        "login_freq": "LoginFrequency", "features_used": "FeaturesUsed",
-        "billing": "BillingCycle", "team_size": "TeamSize",
+        "login_freq": "LoginFrequency",
+        "features_used": "FeaturesUsed",
+        "billing": "BillingCycle",
+        "team_size": "TeamSize",
         "tickets": "SupportTickets",
     },
     "hospitality": {
-        "booking_freq": "BookingFrequency", "loyalty": "LoyaltyPoints",
-        "city_type": "CityType", "ratings": "AverageRating",
+        "booking_freq": "BookingFrequency",
+        "loyalty": "LoyaltyPoints",
+        "city_type": "CityType",
+        "ratings": "AverageRating",
         "complaints": "Complaints",
     },
 }
@@ -115,7 +154,10 @@ FORM_FIELD_MAP: dict[str, dict[str, str]] = {
 # Synthetic data generators per domain
 # ---------------------------------------------------------------------------
 
-def _generate_synthetic(domain: str, n: int = 1000, seed: int = 42) -> tuple[pd.DataFrame, pd.Series]:
+
+def _generate_synthetic(
+    domain: str, n: int = 1000, seed: int = 42
+) -> tuple[pd.DataFrame, pd.Series]:
     """Generate a small realistic synthetic dataset for a domain."""
     rng = np.random.RandomState(seed)
     DOMAIN_SCHEMAS[domain]
@@ -137,12 +179,19 @@ def _generate_synthetic(domain: str, n: int = 1000, seed: int = 42) -> tuple[pd.
         data["TechSupport"] = rng.choice(["Yes", "No", "No internet service"], n)
         data["StreamingTV"] = rng.choice(["Yes", "No", "No internet service"], n)
         data["StreamingMovies"] = rng.choice(["Yes", "No", "No internet service"], n)
-        data["Contract"] = rng.choice(["Month-to-month", "One year", "Two year"], n, p=[0.5, 0.25, 0.25])
+        data["Contract"] = rng.choice(
+            ["Month-to-month", "One year", "Two year"], n, p=[0.5, 0.25, 0.25]
+        )
         data["PaperlessBilling"] = rng.choice(["Yes", "No"], n)
-        data["PaymentMethod"] = rng.choice([
-            "Electronic check", "Mailed check",
-            "Bank transfer (automatic)", "Credit card (automatic)"
-        ], n)
+        data["PaymentMethod"] = rng.choice(
+            [
+                "Electronic check",
+                "Mailed check",
+                "Bank transfer (automatic)",
+                "Credit card (automatic)",
+            ],
+            n,
+        )
         # Realistic churn driver: short tenure + month-to-month + high charges = more churn
         churn_score = (
             (72 - data["tenure"]) / 72 * 0.4
@@ -195,7 +244,9 @@ def _generate_synthetic(domain: str, n: int = 1000, seed: int = 42) -> tuple[pd.
     elif domain == "ott":
         data["WatchHours"] = rng.uniform(1, 500, n).round(1)
         data["LoginFrequency"] = rng.randint(0, 50, n)
-        data["PaymentFailures"] = rng.choice([0, 1, 2, 3, 4, 5], n, p=[0.6, 0.2, 0.1, 0.05, 0.03, 0.02])
+        data["PaymentFailures"] = rng.choice(
+            [0, 1, 2, 3, 4, 5], n, p=[0.6, 0.2, 0.1, 0.05, 0.03, 0.02]
+        )
         data["GenrePreference"] = rng.choice(["Action", "Comedy", "Drama", "Sci-Fi", "Kids"], n)
         data["PlanType"] = rng.choice(["Mobile", "Basic", "Standard", "Premium"], n)
         churn_score = (
@@ -210,7 +261,9 @@ def _generate_synthetic(domain: str, n: int = 1000, seed: int = 42) -> tuple[pd.
         data["HealthScore"] = rng.randint(40, 100, n)
         data["TenureYears"] = rng.randint(1, 20, n)
         data["ClaimsHistory"] = rng.randint(0, 20, n)
-        data["PremiumRegularity"] = rng.choice(["Regular", "Irregular", "Delayed"], n, p=[0.6, 0.25, 0.15])
+        data["PremiumRegularity"] = rng.choice(
+            ["Regular", "Irregular", "Delayed"], n, p=[0.6, 0.25, 0.15]
+        )
         churn_score = (
             (100 - data["HealthScore"]) / 60 * 0.2
             + (20 - data["TenureYears"]) / 19 * 0.2
@@ -262,6 +315,7 @@ def _generate_synthetic(domain: str, n: int = 1000, seed: int = 42) -> tuple[pd.
 # Demo Predictor
 # ---------------------------------------------------------------------------
 
+
 class DemoPredictor:
     """Lightweight predictor using small RandomForest models trained on synthetic data.
 
@@ -291,9 +345,7 @@ class DemoPredictor:
             df[col] = le.fit_transform(df[col].astype(str))
             encoders[col] = le
 
-        model = RandomForestClassifier(
-            n_estimators=80, max_depth=8, random_state=42, n_jobs=-1
-        )
+        model = RandomForestClassifier(n_estimators=80, max_depth=8, random_state=42, n_jobs=-1)
         model.fit(df, y)
 
         cls._models[domain] = model

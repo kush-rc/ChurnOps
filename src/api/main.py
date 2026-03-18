@@ -22,6 +22,7 @@ async def lifespan(app: FastAPI):
     try:
         # Pre-load all predictors to eliminate cold start latency
         from src.api.routes.predictions import preload_all_predictors
+
         preload_all_predictors()
         logger.info("✅ API is ready.")
     except Exception as e:

@@ -40,9 +40,7 @@ class ModelRegistry:
         logger.info(f"Registered model '{name}' version {result.version}")
         return result.version
 
-    def transition_model(
-        self, version: str, stage: str, model_name: str | None = None
-    ) -> None:
+    def transition_model(self, version: str, stage: str, model_name: str | None = None) -> None:
         """Transition a model version to a new stage.
 
         Args:
@@ -51,9 +49,7 @@ class ModelRegistry:
             model_name: Registry name.
         """
         name = model_name or self.model_name
-        self.client.transition_model_version_stage(
-            name=name, version=version, stage=stage
-        )
+        self.client.transition_model_version_stage(name=name, version=version, stage=stage)
         logger.info(f"Model '{name}' v{version} → {stage}")
 
     def get_production_model_uri(self, model_name: str | None = None) -> str | None:
@@ -107,15 +103,17 @@ class ModelRegistry:
         models = []
         for rm in self.client.search_registered_models():
             versions = self.client.search_model_versions(f"name='{rm.name}'")
-            models.append({
-                "name": rm.name,
-                "versions": [
-                    {
-                        "version": v.version,
-                        "stage": v.current_stage,
-                        "run_id": v.run_id,
-                    }
-                    for v in versions
-                ],
-            })
+            models.append(
+                {
+                    "name": rm.name,
+                    "versions": [
+                        {
+                            "version": v.version,
+                            "stage": v.current_stage,
+                            "run_id": v.run_id,
+                        }
+                        for v in versions
+                    ],
+                }
+            )
         return models

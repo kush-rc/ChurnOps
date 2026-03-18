@@ -1,12 +1,12 @@
-import pandas as pd
 import numpy as np
+import pandas as pd
 
 # Define columns based on telco domain schema
 columns = [
-    'gender', 'SeniorCitizen', 'Partner', 'Dependents', 'tenure', 
-    'PhoneService', 'MultipleLines', 'InternetService', 'OnlineSecurity', 
-    'OnlineBackup', 'DeviceProtection', 'TechSupport', 'StreamingTV', 
-    'StreamingMovies', 'Contract', 'PaperlessBilling', 'PaymentMethod', 
+    'gender', 'SeniorCitizen', 'Partner', 'Dependents', 'tenure',
+    'PhoneService', 'MultipleLines', 'InternetService', 'OnlineSecurity',
+    'OnlineBackup', 'DeviceProtection', 'TechSupport', 'StreamingTV',
+    'StreamingMovies', 'Contract', 'PaperlessBilling', 'PaymentMethod',
     'MonthlyCharges', 'TotalCharges'
 ]
 

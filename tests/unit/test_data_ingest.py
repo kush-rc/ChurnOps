@@ -1,7 +1,6 @@
 """Unit tests for data ingestion module."""
 
 
-
 class TestDataIngest:
     """Tests for data ingestion."""
 
