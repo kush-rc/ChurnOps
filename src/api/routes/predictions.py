@@ -34,16 +34,22 @@ def get_predictor(domain: str) -> ChurnPredictor:
 
 
 def preload_all_predictors() -> None:
-    """Pre-load all domain predictors into memory at startup."""
-    # List of all available domains for pre-loading
-    domains = ["telco", "banking", "ecommerce", "gaming", "ott", "healthcare", "saas", "hospitality"]
-    logger.info(f"🔥 Pre-loading predictors for {len(domains)} domains...")
-    for domain in domains:
-        try:
-            get_predictor(domain)
-        except Exception as e:
-            logger.error(f"Failed to pre-load {domain}: {e}")
-    logger.info("✅ All predictors pre-loaded.")
+    """Pre-load only the active domain predictor to save memory on Render (512MB limit)."""
+    import gc
+    from src.utils.config import get_config
+    
+    try:
+        config = get_config()
+        active_domain = config.get("active_dataset", "telco")
+        
+        logger.info(f"🔥 Pre-loading active predictor for domain: {active_domain}...")
+        get_predictor(active_domain)
+        
+        # Reclaim memory from temporary loading objects
+        gc.collect()
+        logger.info("✅ Active predictor pre-loaded. Other domains will lazy-load on demand to stay under 512MB.")
+    except Exception as e:
+        logger.error(f"Failed to pre-load active domain: {e}")
 
 
 @router.get("/health")
