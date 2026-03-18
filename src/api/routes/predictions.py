@@ -35,9 +35,7 @@ def get_predictor(domain: str) -> ChurnPredictor:
 
 def preload_all_predictors() -> None:
     """Pre-load all domain predictors into memory at startup."""
-    from src.api.api import DOMAINS # Need to find where domains are defined
-    # Actually, let's just use the list from config or a hardcoded list for now 
-    # if we can't import easily.
+    # List of all available domains for pre-loading
     domains = ["telco", "banking", "ecommerce", "gaming", "ott", "healthcare", "saas", "hospitality"]
     logger.info(f"🔥 Pre-loading predictors for {len(domains)} domains...")
     for domain in domains:
