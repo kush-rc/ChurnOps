@@ -33,6 +33,7 @@ class CustomerFeatures(BaseModel):
     TotalCharges: float | None = Field(None, ge=0, example=1397.5)
 
     class Config:
+        extra = "allow"
         json_schema_extra = {
             "example": {
                 "gender": "Female",
@@ -80,6 +81,40 @@ class BatchPredictionResponse(BaseModel):
     total: int
     churned_count: int
     churn_rate: float
+
+
+class BatchCustomerResult(BaseModel):
+    """Single row result in a batch upload response."""
+    row_index: int
+    prediction: int
+    churn_probability: float
+    label: str
+    confidence: float
+
+
+class HistogramBin(BaseModel):
+    """A single histogram bin."""
+    bin: str
+    count: int
+
+
+class ConfidenceBreakdown(BaseModel):
+    """Risk confidence breakdown."""
+    low: int = 0
+    medium: int = 0
+    high: int = 0
+
+
+class BatchUploadResponse(BaseModel):
+    """Response for CSV batch upload predictions."""
+    total: int
+    churned_count: int
+    churn_rate: float
+    avg_probability: float
+    probability_distribution: list[HistogramBin]
+    confidence_breakdown: ConfidenceBreakdown
+    top_risk_customers: list[BatchCustomerResult]
+    predictions: list[BatchCustomerResult]
 
 
 class ExplanationResponse(BaseModel):

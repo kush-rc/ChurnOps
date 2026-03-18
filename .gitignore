@@ -77,3 +77,8 @@ great_expectations/uncommitted/
 *.temp
 *.cache
 .prefect/
+
+# ===== Frontend =====
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/

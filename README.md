@@ -1,146 +1,180 @@
-# 🌍 ChurnOps — MLOps Customer Churn Prediction Platform
+# ChurnOps — MLOps Customer Churn Prediction Platform
 
-![Python Version](https://img.shields.io/badge/python-3.10%2B-blue)
-![MLflow](https://img.shields.io/badge/MLflow-Tracking-green)
-![FastAPI](https://img.shields.io/badge/FastAPI-Serving-009688)
-![Streamlit](https://img.shields.io/badge/Streamlit-UI-FF4B4B)
-![NVIDIA](https://img.shields.io/badge/CUDA-GPU_Accelerated-76B900)
-
-Welcome to the **Multi-Domain Customer Churn MLOps Pipeline**. This is not just a Jupyter Notebook; it is a full-stack, production-ready Machine Learning Architecture. It was designed to demonstrate how to mathematically synthesize Big Data, orchestrate automated training pipelines with GPU acceleration, and deploy dynamic visual AI Control Centers.
+> A production-grade MLOps pipeline that predicts customer churn across **8 industry verticals** using ensemble machine learning, real-time inference via FastAPI, and a React analytics dashboard.
 
 ---
 
-## 🚀 1. What Have I Done?
+## Why This Project Exists
 
-I completely engineered an enterprise-grade AI architecture from the ground up that predicts customer churn (attrition) not just for one business, but for **8 massive global industries** (Telecom, Banking, E-Commerce, SaaS, Gaming, etc.).
+Customer churn (when a user stops using a product) is one of the most expensive problems in business. This project demonstrates how to build a **complete, end-to-end MLOps system** that can:
 
-**How I did it:**
-1. **Synthetic Big Data Generation**: Instead of relying on small, outdated public datasets, I wrote vectorized Numpy scripts to generate **8 Million rows** of highly realistic data mimicking financial curves, gaming win-rates, and SaaS features.
-2. **GPU-Accelerated Pipelines**: I migrated algorithms like XGBoost, LightGBM, and CatBoost to run natively on NVIDIA CUDA Architecture, dropping training time by orders of magnitude.
-3. **Automated MLOps**: I hooked the entire training loop into **MLflow** for experiment tracking and **Optuna** for Bayesian Hyperparameter evolutionary tuning.
-4. **Dynamic AI Engine**: I stood up a **FastAPI** server that acts as a secure mathematical endpoint, wrapped by a glorious **Streamlit UI** that hot-swaps input fields dynamically depending on what industry you want to analyze.
-
-### 💼 How Does This Help Others?
-- **For Businesses**: A company can clone this repository, drop their own customer CSV into the `data/raw/` folder, configure a single YAML file, and instantly have a complete AI prediction dashboard for their marketing team.
-- **For Developers/Recruiters**: It acts as a flawless portfolio template showing the exact best-practices required for real-world Machine Learning Operations (modular code, REST APIs, MLflow registries).
+1. **Generate** realistic churn datasets for 8 industries (Telecom, Banking, E-commerce, SaaS, Healthcare, Gaming, OTT, Hospitality)
+2. **Train & tune** 6 ML algorithms with Optuna hyperparameter optimization, logged via MLflow
+3. **Serve** real-time and batch predictions through a FastAPI REST API
+4. **Explain** predictions using SHAP (SHapley Additive exPlanations) for model transparency
+5. **Visualize** everything in a premium React dashboard with dark mode
 
 ---
 
-## 🏗️ 2. The Core Architecture & Pipeline
+## Tech Stack
 
-Data doesn't just "become" intelligence. It flows through a strict mathematical pipeline:
-
-1. **Ingestion & ETL (`src/data/`)**: Raw CSVs (1M rows each) are streamed in. Missing values are filled via medians, and new features are mathematically constructed (e.g., `TotalRevenue = Tenure * MonthlyCharges`).
-2. **Class Balancing**: Because churn is a minority class (e.g., only 20% of users churn), we use **SMOTE** (Synthetic Minority Over-sampling Technique) to algorithmically hallucinate realistic churners so the AI isn't biased.
-3. **Automated Modeling (`scripts/run_training.py`)**: The data is fed into 6 different Machine Learning algorithms. They are Cross-Validated using a 5-fold split to prevent memorization (overfitting).
-4. **Experiment Tracking (`MLflow`)**: As models train, MLflow silently logs every single statistic (AUC, F1-Score, Training Time). The best algorithmic "Champion" is frozen in time and registered.
-5. **Serving (`FastAPI`)**: The backend server boots, locks onto the MLflow Champion model, and opens a web endpoint (`/predict`).
-6. **Interaction (`Streamlit`)**: The UI communicates with FastAPI to pass real-world form data into the backend, rendering real-time predictions back to the user.
-
----
-
-## 📂 3. Detailed Folder Structure Explained
-
-I strictly followed Enterprise Software Engineering standards. Here is why every single file exists:
-
-```text
-churn-prediction-mlops/
-│
-├── configs/                 # YAML Configuration Maps
-│   ├── data/                 # (e.g., banking.yaml) Tells the pipeline exactly what columns exist and what to predict.
-│   └── model/                # Contains the default hyperparameters for XGBoost, Random Forest, etc.
-│
-├── data/                    # The Data Lake
-│   ├── raw/                  # The massive 1-Million row synthetic CSVs we generated.
-│   └── processed/            # Where the cleaned data lives before training.
-│
-├── scripts/                 # The Orchestrators (The "Doers")
-│   ├── generate_8_domains.py # The script that fabricated the 8 Million rows using advanced Numpy distributions.
-│   ├── orchestrate_all.ps1   # A master script that runs ETL and Training sequentially for every industry safely.
-│   ├── run_training.py       # Loads data, runs 6 models, compares metrics, and registers the Champion.
-│   └── run_tuning.py         # The Optuna genetic algorithm that mathematically evolves the model's parameters.
-│
-├── src/                     # The Intelligence Core (The "Brains")
-│   ├── api/                  # The FastAPI backend application routing logic.
-│   ├── data/                 # The actual Python classes that clean data (DataPreprocessor) and build metrics (FeatureEngineer).
-│   └── models/               # Contains the MLflow loading wrappers so FastAPI can talk to the trained weights.
-│
-├── streamlit_app/           # The Frontend Command Center
-│   ├── app.py                # The Multi-Domain Home Page dropdown dashboard.
-│   └── pages/                # The dynamically rendered Prediction Forms and Batch-Predict CSV pages.
-│
-├── .gitignore               # Ensures we don't upload 8 Gigabytes of raw CSVs to GitHub.
-├── DATA_GENERATION_EXPLAINED.md # Explains the math behind how we safely simulated human data.
-├── PROJECT_DOCUMENTATION.md # A secondary deep-dive text into architecture choices.
-├── requirements.txt         # Every single exact version of Python libraries needed to run this repo safely.
-└── mlflow.db                # The hidden SQLite database where MLflow logs its model scores.
-```
+| Layer | Technology |
+|---|---|
+| **ML/Data** | XGBoost, LightGBM, CatBoost, Random Forest, Logistic Regression, scikit-learn |
+| **Experiment Tracking** | MLflow (model registry, metrics, artifacts) |
+| **Hyperparameter Tuning** | Optuna (Bayesian optimization) |
+| **API** | FastAPI + Uvicorn |
+| **Explainability** | SHAP (PermutationExplainer with caching) |
+| **Frontend** | React 18 + Vite + Recharts + Framer Motion + Lucide Icons |
+| **Containerization** | Docker + Docker Compose |
+| **CI/CD** | GitHub Actions (lint → test → build → deploy) |
+| **Code Quality** | Ruff (linter/formatter) + MyPy (type checker) + pre-commit hooks |
+| **Data Validation** | Great Expectations patterns via custom validators |
+| **Monitoring** | Prometheus metrics + Evidently AI drift detection |
 
 ---
 
-## 💻 4. How To Run Locally
+## Quick Start
 
-If you cloned this, here is how you boot the entire engine on your own machine.
+### Prerequisites
+- Python 3.10+
+- Node.js 18+
+- Git
 
-### Step 1: Install Dependencies
-Ensure you have Python 3.10+ installed.
+### 1. Clone & Setup Backend
 ```bash
+git clone https://github.com/kushchhunchha/churn-prediction-mlops.git
+cd churn-prediction-mlops
+
 python -m venv venv
-# Windows:
-.\venv\Scripts\activate
-# Mac/Linux:
-source venv/bin/activate
+venv\Scripts\activate           # Windows
+# source venv/bin/activate      # macOS/Linux
 
 pip install -r requirements.txt
+pip install -e .
 ```
 
-### Step 2: Generate the Big Data & Train Models
-Since the 8 Million rows are too large for GitHub, generate them locally, then train all the models into MLflow!
+### 2. Generate Data & Train Models
 ```bash
+# Generate synthetic datasets for all 8 domains
 python scripts/generate_8_domains.py
-.\scripts\orchestrate_all.ps1
+
+# Train models (logs to MLflow automatically)
+python scripts/run_training.py
+
+# Optional: hyperparameter tuning
+python scripts/run_tuning.py
 ```
 
-### Step 3: Boot the FastAPI Engine
-Start the backend AI interface.
+### 3. Start Backend API
 ```bash
-uvicorn src.api.main:app --host 0.0.0.0 --port 8000
+$env:PYTHONPATH="."; uvicorn src.api.main:app --host 0.0.0.0 --port 8000
 ```
 
-### Step 4: Boot the Streamlit UI
-Open a second terminal and start the front-end!
+### 4. Start Frontend
 ```bash
-streamlit run streamlit_app/app.py
+cd frontend
+npm install
+npm run dev
+```
+
+Open **http://localhost:5173** in your browser.
+
+### 5. Docker (Alternative)
+```bash
+docker-compose up --build
+# API → http://localhost:8000
+# Frontend → http://localhost:3000
 ```
 
 ---
 
-## 🌐 5. Deployment Guide (GitHub & Streamlit Cloud)
+## Project Structure
 
-I have engineered this to be perfectly deployable to showcase to the world.
+See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for a detailed file-by-file breakdown.
 
-### Step A: Push to GitHub
-1. Open your terminal in the root of the project.
-2. Initialize and commit your code, completely ignoring the massive datasets.
-```bash
-git init
-git add .
-git commit -m "🚀 Initial Commit: Multi-Domain MLOps Architecture"
-git branch -M main
-git remote add origin https://github.com/YOUR_USERNAME/YOUR_REPO_NAME.git
-git push -u origin main
+```
+churn-prediction-mlops/
+├── configs/              # YAML configs for data, models, training, monitoring
+├── data/                 # Raw CSVs, processed parquets, feature stores
+├── docs/                 # Architecture, API reference, Docker guide
+├── frontend/             # React + Vite dashboard (5 pages)
+├── models/               # Saved preprocessors (joblib files)
+├── reports/              # Model comparison JSONs, confusion matrices
+├── scripts/              # Data generation, training, tuning, testing
+├── src/                  # Core Python source code
+│   ├── api/              # FastAPI app, routes, schemas
+│   ├── data/             # Ingest, preprocess, validate, feature engineering
+│   ├── models/           # Train, predict, evaluate, explain, tune, registry
+│   ├── monitoring/       # Drift detection, metrics, alerts
+│   └── utils/            # Config loader, helpers, logging
+├── tests/                # Unit + integration tests
+├── Dockerfile            # Backend container
+├── docker-compose.yml    # Full stack orchestration
+├── Makefile              # CLI shortcuts (make serve, make test, etc.)
+├── pyproject.toml        # Project metadata + tool config
+└── requirements.txt      # Python dependencies
 ```
 
-### Step B: Free Deployment to Streamlit Community Cloud
-Streamlit provides free cloud hosting directly linked to your GitHub!
+---
 
-1. Go to [share.streamlit.io](https://share.streamlit.io/) and create a free account linked to your GitHub.
-2. Click **"New App"**.
-3. Point it to your GitHub Repository.
-4. Set the **Main file path** to: `streamlit_app/app.py`.
-5. Click **Deploy!**
+## Documentation
 
-*(Note: Because the API backend won't easily fit inside Streamlit's free tier natively alongside the UI, the `01_predict.py` file has been pre-configured with a "spoofed" intelligence fallback using randomized bounds. This ensures that recruiters and users can beautifully visualize the Domain-Changing capabilities in the cloud without needing to rent a $40/month backend server for FastAPI).*
+| Document | Description |
+|---|---|
+| [ARCHITECTURE.md](docs/ARCHITECTURE.md) | Full system architecture, every file explained |
+| [API_REFERENCE.md](docs/API_REFERENCE.md) | All REST endpoints with request/response examples |
+| [DOCKER_GUIDE.md](docs/DOCKER_GUIDE.md) | Container setup, why Docker, environment config |
+| [DATA_GENERATION_EXPLAINED.md](docs/DATA_GENERATION_EXPLAINED.md) | How synthetic data is created for 8 industries |
+| [model_card.md](docs/model_card.md) | Model performance, training details, limitations |
 
 ---
-Made with ❤️ through MLOps Best Practices.
+
+## Features
+
+### Dashboard
+- Live training population stats, model ensemble info, inference health
+- Infrastructure maturity indicators and intelligence feed
+
+### Prediction
+- Single-customer prediction with domain-specific input forms
+- Real-time churn probability with confidence scores
+
+### Batch Analysis
+- CSV upload with drag-and-drop
+- Probability distribution histogram, risk segmentation donut chart
+- Top-risk customer table, full paginated results with CSV export
+
+### Model Comparison
+- Side-by-side comparison of all trained algorithms
+- Accuracy, Precision, Recall, F1, AUC metrics
+
+### Explainability
+- Real SHAP values computed from the trained XGBoost model
+- Top positive/negative feature contributions per prediction
+
+### Dark Mode
+- Toggle between light and dark themes (persistent across sessions)
+
+---
+
+## Make Commands
+
+```bash
+make setup          # Create venv + install everything
+make serve          # Start FastAPI server (port 8000)
+make mlflow         # Start MLflow UI (port 5000)
+make test           # Run all tests with coverage
+make lint           # Run Ruff linter
+make clean          # Remove caches and build artifacts
+make up             # Start Docker Compose stack
+make down           # Stop Docker Compose stack
+```
+
+---
+
+## License
+
+MIT License — see [pyproject.toml](pyproject.toml) for details.
+
+Built by **Kush Chhunchha**.

@@ -10,7 +10,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 from loguru import logger
-from sklearn.preprocessing import LabelEncoder, OneHotEncoder, StandardScaler
+from sklearn.preprocessing import LabelEncoder, OneHotEncoder, StandardScaler, MinMaxScaler, RobustScaler
 
 from src.utils.config import get_dataset_config, get_path
 from src.utils.helpers import load_dataframe, save_dataframe, timer
@@ -22,9 +22,12 @@ class FeatureEngineer:
     def __init__(self, dataset_name: str | None = None):
         self.config = get_dataset_config(dataset_name)
         self.preprocessing_config = self.config.get("preprocessing", {})
-        self.encoders: dict[str, LabelEncoder] = {}
-        self.scaler: StandardScaler | None = None
+        self.label_encoders: dict[str, LabelEncoder] = {}
+        self.ohe: OneHotEncoder | None = None
+        self.scaler = None
+        self.bin_edges: dict[str, list] = {}
         self.feature_names: list[str] = []
+        self._is_fit = False
 
     @timer
     def engineer_features(self, df: pd.DataFrame) -> pd.DataFrame:
@@ -56,6 +59,8 @@ class FeatureEngineer:
         # Step 5: Scale numerical features
         df = self._scale_numericals(df)
 
+        self._is_fit = True
+        
         self.feature_names = [c for c in df.columns if c != self.config["target"]]
         logger.info(f"Output shape: {df.shape}")
         logger.info(f"Total features: {len(self.feature_names)}")
@@ -191,33 +196,81 @@ class FeatureEngineer:
         numerical = [c for c in self.config.get("numerical_features", []) if c in df.columns]
 
         for col in numerical:
-            if pd.api.types.is_numeric_dtype(df[col]) and df[col].nunique() > 10:
-                try:
-                    df[f"{col}_bin"] = pd.qcut(df[col], q=4, labels=["Q1", "Q2", "Q3", "Q4"], duplicates="drop")
-                    df[f"{col}_bin"] = df[f"{col}_bin"].astype(str)
-                except Exception:
-                    pass  # Skip if binning fails
+            if pd.api.types.is_numeric_dtype(df[col]):
+                if not self._is_fit:
+                    if df[col].nunique() > 10:
+                        try:
+                            # Fit and get bin edges
+                            binned, edges = pd.qcut(df[col], q=4, labels=["Q1", "Q2", "Q3", "Q4"], duplicates="drop", retbins=True)
+                            
+                            # Ensure outer edges cover everything during inference
+                            edges[0] = -np.inf
+                            edges[-1] = np.inf
+                            
+                            self.bin_edges[col] = edges
+                            df[f"{col}_bin"] = binned.astype(str)
+                        except Exception:
+                            pass  # Skip if binning fails
+                else:
+                    # Inference: Use saved bin edges
+                    if col in self.bin_edges:
+                        edges = self.bin_edges[col]
+                        labels = ["Q1", "Q2", "Q3", "Q4"][:len(edges)-1]
+                        
+                        df[f"{col}_bin"] = pd.cut(df[col], bins=edges, labels=labels, include_lowest=True).astype(str)
 
         return df
 
     def _encode_categoricals(self, df: pd.DataFrame) -> pd.DataFrame:
         """Encode categorical features based on config strategy."""
         strategy = self.preprocessing_config.get("encode_strategy", "onehot")
-        categorical = [c for c in df.select_dtypes(include=["object", "category"]).columns
-                       if c != self.config["target"]]
+        
+        if not self._is_fit:
+            categorical = [c for c in df.select_dtypes(include=["object", "category"]).columns
+                           if c != self.config["target"]]
+        else:
+            if strategy == "onehot" and self.ohe is not None:
+                categorical = list(self.ohe.feature_names_in_)
+            elif strategy == "label":
+                categorical = list(self.label_encoders.keys())
+            else:
+                categorical = []
 
         if not categorical:
             return df
+            
+        # Ensure all expected categorical columns exist during inference
+        if self._is_fit:
+            for col in categorical:
+                if col not in df.columns:
+                    df[col] = "Unknown"
 
         if strategy == "label":
             for col in categorical:
-                le = LabelEncoder()
-                df[col] = le.fit_transform(df[col].astype(str))
-                self.encoders[col] = le
+                if not self._is_fit:
+                    le = LabelEncoder()
+                    df[col] = le.fit_transform(df[col].astype(str))
+                    self.label_encoders[col] = le
+                else:
+                    # In inference, handle unseen labels gracefully
+                    le = self.label_encoders.get(col)
+                    if le:
+                        known_classes = set(le.classes_)
+                        processed_col = df[col].astype(str).map(lambda s: s if s in known_classes else le.classes_[0])
+                        df[col] = le.transform(processed_col)
+                    
             logger.info(f"Label encoded {len(categorical)} columns")
 
         elif strategy == "onehot":
-            df = pd.get_dummies(df, columns=categorical, drop_first=True, dtype=int)
+            if not self._is_fit:
+                self.ohe = OneHotEncoder(sparse_output=False, handle_unknown="ignore")
+                self.ohe.set_output(transform="pandas")
+                encoded = self.ohe.fit_transform(df[categorical].astype(str))
+            else:
+                encoded = self.ohe.transform(df[categorical].astype(str))
+                
+            df = df.drop(columns=[c for c in categorical if c in df.columns])
+            df = pd.concat([df, encoded], axis=1)
             logger.info(f"One-hot encoded {len(categorical)} columns → {len(df.columns)} total")
 
         return df
@@ -232,16 +285,41 @@ class FeatureEngineer:
         if not numerical:
             return df
 
-        if strategy == "standard":
-            self.scaler = StandardScaler()
-        elif strategy == "minmax":
-            self.scaler = MinMaxScaler()
-        elif strategy == "robust":
-            self.scaler = RobustScaler()
+        if not self._is_fit:
+            if strategy == "standard":
+                self.scaler = StandardScaler()
+            elif strategy == "minmax":
+                self.scaler = MinMaxScaler()
+            elif strategy == "robust":
+                self.scaler = RobustScaler()
+                
+            if self.scaler:
+                # Use fitted feature names if available to ensure correct order
+                scaler_cols = getattr(self.scaler, "feature_names_in_", numerical)
+                if isinstance(scaler_cols, np.ndarray):
+                    scaler_cols = scaler_cols.tolist()
+                
+                # Ensure columns exist in DataFrame
+                for col in scaler_cols:
+                    if col not in df.columns:
+                        df[col] = 0
+                        
+                df[scaler_cols] = self.scaler.fit_transform(df[scaler_cols])
+                logger.info(f"Scaled {len(scaler_cols)} numerical features ({strategy})")
+        else:
+            if self.scaler:
+                # Use fitted feature names if available to ensure correct order
+                scaler_cols = getattr(self.scaler, "feature_names_in_", numerical)
+                if isinstance(scaler_cols, np.ndarray):
+                    scaler_cols = scaler_cols.tolist()
 
-        if self.scaler:
-            df[numerical] = self.scaler.fit_transform(df[numerical])
-            logger.info(f"Scaled {len(numerical)} numerical features ({strategy})")
+                # Ensure columns exist in DataFrame
+                for col in scaler_cols:
+                    if col not in df.columns:
+                        df[col] = 0
+
+                df[scaler_cols] = self.scaler.transform(df[scaler_cols])
+                logger.info(f"Transformed {len(scaler_cols)} numerical features ({strategy})")
 
         return df
 
@@ -256,6 +334,27 @@ class FeatureEngineer:
         output_path = output_dir / filename
         save_dataframe(df, output_path)
         return output_path
+
+    def save_state(self) -> Path:
+        """Save the fitted engineer state using joblib."""
+        import joblib
+        output_dir = get_path("models") / "preprocessors"
+        output_dir.mkdir(parents=True, exist_ok=True)
+        path = output_dir / f"{self.config['name']}_engineer.joblib"
+        joblib.dump(self, path)
+        logger.info(f"💾 Saved engineer state to {path}")
+        return path
+
+    @classmethod
+    def load_state(cls, dataset_name: str):
+        """Load a fitted engineer state."""
+        import joblib
+        path = get_path("models") / "preprocessors" / f"{dataset_name}_engineer.joblib"
+        if not path.exists():
+            raise FileNotFoundError(f"Engineer state not found at {path}")
+        engineer = joblib.load(path)
+        engineer._is_fit = True  # Always true when loaded for inference
+        return engineer
 
 
 if __name__ == "__main__":

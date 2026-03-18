@@ -21,11 +21,9 @@ async def lifespan(app: FastAPI):
     """Application lifespan: startup and shutdown events."""
     logger.info("🚀 Starting Churn Prediction API...")
     try:
-        app.state.predictor = ChurnPredictor(model_uri="models:/churn-prediction-model/latest")
-        logger.info("✅ Model loaded successfully from MLflow.")
+        logger.info("✅ API is ready.")
     except Exception as e:
-        logger.error(f"Failed to load model from MLflow: {e}")
-        app.state.predictor = None
+        logger.error(f"Error during API startup: {e}")
         
     yield
     # Shutdown: cleanup

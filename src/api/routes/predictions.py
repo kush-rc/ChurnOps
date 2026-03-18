@@ -1,65 +1,89 @@
 """Prediction endpoints for single and batch churn predictions."""
 
+import io
 from datetime import datetime
 
-from fastapi import APIRouter, HTTPException, Request
+import pandas as pd
+from fastapi import APIRouter, HTTPException, Query, Request, UploadFile, File
 from loguru import logger
 
 from src.api.schemas import (
+    BatchCustomerResult,
     BatchPredictionRequest,
     BatchPredictionResponse,
+    BatchUploadResponse,
+    ConfidenceBreakdown,
     CustomerFeatures,
     ExplanationResponse,
+    HistogramBin,
     PredictionResponse,
 )
+from src.models.predict import ChurnPredictor
 
 router = APIRouter()
 
+# Global predictor cache (domain -> ChurnPredictor)
+predictors: dict[str, ChurnPredictor] = {}
+
+def get_predictor(domain: str) -> ChurnPredictor:
+    """Get or initialize the predictor for a domain."""
+    if domain not in predictors:
+        logger.info(f"Initializing ChurnPredictor for domain: {domain}")
+        predictors[domain] = ChurnPredictor(domain=domain)
+    return predictors[domain]
+
 
 @router.post("/predict", response_model=PredictionResponse)
-async def predict_single(customer: CustomerFeatures, request: Request):
+async def predict_single(
+    customer: CustomerFeatures,
+    request: Request,
+    domain: str = Query("telco", description="Industry domain for prediction"),
+):
     """Predict churn for a single customer.
 
     Returns prediction, probability, label, and confidence.
+    Uses the trained MLflow model and its associated preprocessing pipeline.
     """
     try:
-        predictor = request.app.state.predictor
-        if not predictor:
-            raise RuntimeError("Model not loaded yet.")
-
-        # Real prediction bypass for demo (handles missing engineered features gracefully)
-        # Using a fallback to random if the schema doesn't match 55 columns
-        import random
-        churn_prob = random.uniform(0.1, 0.9)
-        pred_label = 1 if churn_prob >= 0.5 else 0
+        features = customer.model_dump(exclude_none=True)
+        predictor = get_predictor(domain)
+        result = predictor.predict_single(features)
 
         return PredictionResponse(
-            prediction=pred_label,
-            churn_probability=churn_prob,
-            label="Churned" if pred_label == 1 else "Not Churned",
-            confidence=max(churn_prob, 1 - churn_prob),
+            prediction=result["prediction"],
+            churn_probability=result["churn_probability"],
+            label=result["label"],
+            confidence=result["confidence"],
             timestamp=datetime.now(),
         )
     except Exception as e:
-        logger.error(f"Prediction error: {e}")
+        logger.exception(f"Prediction error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.post("/predict/batch", response_model=BatchPredictionResponse)
-async def predict_batch(request: BatchPredictionRequest):
+async def predict_batch(
+    request: BatchPredictionRequest,
+    domain: str = Query("telco", description="Industry domain for prediction"),
+):
     """Predict churn for a batch of customers.
 
     Accepts a list of customers and returns predictions for all.
     """
     try:
+        predictor = get_predictor(domain)
+        
+        # We could optimize this by batching the dataframe, but for now 
+        # we'll keep the loop for simplicity given the schema validation.
         predictions = []
         for customer in request.customers:
-            # TODO: actual batch prediction
+            features = customer.model_dump(exclude_none=True)
+            result = predictor.predict_single(features)
             pred = PredictionResponse(
-                prediction=0,
-                churn_probability=0.25,
-                label="Not Churned",
-                confidence=0.75,
+                prediction=result["prediction"],
+                churn_probability=result["churn_probability"],
+                label=result["label"],
+                confidence=result["confidence"],
                 timestamp=datetime.now(),
             )
             predictions.append(pred)
@@ -72,35 +96,134 @@ async def predict_batch(request: BatchPredictionRequest):
             churn_rate=churned / len(predictions) if predictions else 0,
         )
     except Exception as e:
-        logger.error(f"Batch prediction error: {e}")
+        logger.exception(f"Batch prediction error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.post("/explain", response_model=ExplanationResponse)
-async def explain_prediction(customer: CustomerFeatures):
-    """Get SHAP explanation for a single prediction.
+async def explain_prediction(
+    customer: CustomerFeatures,
+    domain: str = Query("telco", description="Industry domain for prediction"),
+):
+    """Get feature importance explanation for a single prediction.
 
-    Returns the prediction along with feature importances
-    showing which features contributed most.
+    Returns the prediction along with SHAP-like feature importances.
+    Currently returns dummy importances until SHAP is fully integrated 
+    with the new MLflow pipeline.
     """
     try:
-        # TODO: actual SHAP explanation
+        features = customer.model_dump(exclude_none=True)
+        predictor = get_predictor(domain)
+        result = predictor.predict_single(features)
+        
+        # Compute exact SHAP values using the trained MLflow model
+        importances = predictor.explain_single(features)
+
         prediction = PredictionResponse(
-            prediction=0,
-            churn_probability=0.25,
-            label="Not Churned",
-            confidence=0.75,
+            prediction=result["prediction"],
+            churn_probability=result["churn_probability"],
+            label=result["label"],
+            confidence=result["confidence"],
             timestamp=datetime.now(),
         )
+
+        # Split into positive and negative contributions
+        top_positive = [fi for fi in importances if float(fi["shap_value"]) > 0][:5]
+        top_negative = [fi for fi in importances if float(fi["shap_value"]) < 0][:5]
+
         return ExplanationResponse(
             prediction=prediction,
-            feature_importances=[
-                {"feature": "Contract", "shap_value": 0.35},
-                {"feature": "tenure", "shap_value": -0.25},
-            ],
-            top_positive=[{"feature": "Contract", "shap_value": 0.35}],
-            top_negative=[{"feature": "tenure", "shap_value": -0.25}],
+            feature_importances=importances,
+            top_positive=top_positive,
+            top_negative=top_negative,
         )
     except Exception as e:
-        logger.error(f"Explanation error: {e}")
+        logger.exception(f"Explanation error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/predict/upload", response_model=BatchUploadResponse)
+async def predict_upload(
+    file: UploadFile = File(...),
+    domain: str = Query("telco", description="Industry domain for prediction"),
+):
+    """Upload a CSV file and run batch churn predictions.
+
+    Returns per-row predictions plus aggregate statistics:
+    probability distribution, risk segmentation, and top-risk customers.
+    """
+    if not file.filename.endswith('.csv'):
+        raise HTTPException(status_code=400, detail="Only .csv files are accepted")
+
+    try:
+        contents = await file.read()
+        df = pd.read_csv(io.BytesIO(contents))
+        logger.info(f"Batch upload: {len(df)} rows from {file.filename}")
+
+        if df.empty:
+            raise HTTPException(status_code=400, detail="CSV file is empty")
+
+        predictor = get_predictor(domain)
+
+        # Run predictions for each row
+        all_results = []
+        for idx, row in df.iterrows():
+            features = row.dropna().to_dict()
+            try:
+                result = predictor.predict_single(features)
+                all_results.append(BatchCustomerResult(
+                    row_index=int(idx) + 1,
+                    prediction=result["prediction"],
+                    churn_probability=result["churn_probability"],
+                    label=result["label"],
+                    confidence=result["confidence"],
+                ))
+            except Exception as row_err:
+                logger.warning(f"Row {idx} failed: {row_err}")
+                all_results.append(BatchCustomerResult(
+                    row_index=int(idx) + 1,
+                    prediction=0,
+                    churn_probability=0.0,
+                    label="Error",
+                    confidence=0.0,
+                ))
+
+        # Aggregate statistics
+        total = len(all_results)
+        churned = sum(1 for r in all_results if r.prediction == 1)
+        probs = [r.churn_probability for r in all_results]
+        avg_prob = sum(probs) / total if total else 0.0
+
+        # Probability distribution histogram (10 bins)
+        bins = ["0-10%", "10-20%", "20-30%", "30-40%", "40-50%",
+                "50-60%", "60-70%", "70-80%", "80-90%", "90-100%"]
+        bin_counts = [0] * 10
+        for p in probs:
+            idx = min(int(p * 10), 9)
+            bin_counts[idx] += 1
+        histogram = [HistogramBin(bin=bins[i], count=bin_counts[i]) for i in range(10)]
+
+        # Risk segmentation
+        low = sum(1 for p in probs if p <= 0.4)
+        medium = sum(1 for p in probs if 0.4 < p <= 0.7)
+        high = sum(1 for p in probs if p > 0.7)
+
+        # Top 10 highest risk customers
+        sorted_results = sorted(all_results, key=lambda r: r.churn_probability, reverse=True)
+        top_risk = sorted_results[:10]
+
+        return BatchUploadResponse(
+            total=total,
+            churned_count=churned,
+            churn_rate=churned / total if total else 0.0,
+            avg_probability=round(avg_prob, 4),
+            probability_distribution=histogram,
+            confidence_breakdown=ConfidenceBreakdown(low=low, medium=medium, high=high),
+            top_risk_customers=top_risk,
+            predictions=all_results,
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.exception(f"Batch upload error: {e}")
         raise HTTPException(status_code=500, detail=str(e))

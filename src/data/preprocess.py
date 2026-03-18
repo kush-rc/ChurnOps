@@ -6,6 +6,7 @@ encoding, and scaling. Outputs clean Parquet files.
 """
 
 from pathlib import Path
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -23,7 +24,9 @@ class DataPreprocessor:
         self.config = get_dataset_config(dataset_name)
         self.preprocessing_config = self.config.get("preprocessing", {})
         self.label_encoders: dict[str, LabelEncoder] = {}
+        self.imputation_values: dict[str, Any] = {}
         self.scaler = None
+        self._is_fit = False
 
     @timer
     def preprocess(self, df: pd.DataFrame) -> pd.DataFrame:
@@ -40,8 +43,22 @@ class DataPreprocessor:
 
         df = df.copy()
 
+        # Input imputation for sparse inference payloads
+        if not self._is_fit:
+            target = self.config.get("target")
+            # Add missing numerical features with 0
+            for col in self.config.get("numerical_features", []):
+                if col != target and col not in df.columns:
+                    df[col] = 0.0
+            # Add missing categorical features with "Unknown" 
+            for col in self.config.get("categorical_features", []):
+                if col != target and col not in df.columns:
+                    df[col] = "Unknown"
+
         # Step 1: Drop unnecessary columns
         df = self._drop_columns(df)
+
+        self._is_fit = True
 
         # Step 2: Handle target column
         df = self._encode_target(df)
@@ -78,9 +95,10 @@ class DataPreprocessor:
         target = self.config["target"]
         positive_label = self.config.get("target_positive_label")
 
-        if positive_label is not None and df[target].dtype == object:
-            df[target] = (df[target] == positive_label).astype(int)
-            logger.info(f"Encoded target '{target}': '{positive_label}' → 1, rest → 0")
+        if target in df.columns:
+            if positive_label is not None and df[target].dtype == object:
+                df[target] = (df[target] == positive_label).astype(int)
+                logger.info(f"Encoded target '{target}': '{positive_label}' → 1, rest → 0")
 
         return df
 
@@ -108,18 +126,33 @@ class DataPreprocessor:
 
         # Numerical: fill with median/mean
         for col in numerical:
-            if col in df.columns and df[col].isnull().any():
-                if strategy == "median":
-                    df[col] = df[col].fillna(df[col].median())
-                elif strategy == "mean":
-                    df[col] = df[col].fillna(df[col].mean())
-                elif strategy == "drop":
-                    df = df.dropna(subset=[col])
+            if col in df.columns:
+                if df[col].isnull().any() or not self._is_fit:
+                    if self._is_fit:
+                        if strategy == "median":
+                            self.imputation_values[col] = df[col].median()
+                        elif strategy == "mean":
+                            self.imputation_values[col] = df[col].mean()
+                        elif strategy == "drop":
+                            pass # Handled differently, but let's default to median
+                            self.imputation_values[col] = df[col].median()
+                    
+                    if col in self.imputation_values and not pd.isna(self.imputation_values[col]):
+                        df[col] = df[col].fillna(self.imputation_values[col])
+                    elif strategy == "drop" and self._is_fit:
+                        df = df.dropna(subset=[col])
 
         # Categorical: fill with mode
         for col in categorical:
-            if col in df.columns and df[col].isnull().any():
-                df[col] = df[col].fillna(df[col].mode()[0])
+            if col in df.columns:
+                if df[col].isnull().any() or not self._is_fit:
+                    if self._is_fit:
+                        mode_vals = df[col].mode()
+                        if len(mode_vals) > 0:
+                            self.imputation_values[col] = mode_vals[0]
+                    
+                    if col in self.imputation_values and not pd.isna(self.imputation_values[col]):
+                        df[col] = df[col].fillna(self.imputation_values[col])
 
         missing_after = df.isnull().sum().sum()
         logger.info(f"Missing values after: {missing_after}")
@@ -146,6 +179,27 @@ class DataPreprocessor:
         output_path = output_dir / filename
         save_dataframe(df, output_path)
         return output_path
+
+    def save_state(self) -> Path:
+        """Save the fitted preprocessor state using joblib."""
+        import joblib
+        output_dir = get_path("models") / "preprocessors"
+        output_dir.mkdir(parents=True, exist_ok=True)
+        path = output_dir / f"{self.config['name']}_preprocessor.joblib"
+        joblib.dump(self, path)
+        logger.info(f"💾 Saved preprocessor state to {path}")
+        return path
+
+    @classmethod
+    def load_state(cls, dataset_name: str):
+        """Load a fitted preprocessor state."""
+        import joblib
+        path = get_path("models") / "preprocessors" / f"{dataset_name}_preprocessor.joblib"
+        if not path.exists():
+            raise FileNotFoundError(f"Preprocessor state not found at {path}")
+        preprocessor = joblib.load(path)
+        preprocessor._is_fit = False  # Set to false for inference so it doesn't relearn
+        return preprocessor
 
 
 if __name__ == "__main__":

@@ -35,6 +35,7 @@ api:
   cors_origins:
     - "http://localhost:3000"
     - "http://localhost:8501"
+    - "http://localhost:5173"
 
 # Logging
 logging:

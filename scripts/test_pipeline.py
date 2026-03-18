@@ -50,8 +50,10 @@ def main():
     preprocessor = DataPreprocessor(dataset_name)
     df_clean = preprocessor.preprocess(df)
     path_clean = preprocessor.save_processed(df_clean)
+    path_prep_state = preprocessor.save_state()
     print(f"  ✅ Cleaned: {df_clean.shape[0]:,} rows × {df_clean.shape[1]} columns")
     print(f"  Saved to: {path_clean}")
+    print(f"  Saved state to: {path_prep_state}")
 
     # Step 4: Feature Engineering
     print("\n[4/4] ENGINEERING FEATURES...")
@@ -59,9 +61,11 @@ def main():
     engineer = FeatureEngineer(dataset_name)
     df_features = engineer.engineer_features(df_clean)
     path_features = engineer.save_features(df_features)
+    path_eng_state = engineer.save_state()
     print(f"  ✅ Features: {df_features.shape[0]:,} rows × {df_features.shape[1]} columns")
     print(f"  Total feature columns: {len(engineer.feature_names)}")
     print(f"  Saved to: {path_features}")
+    print(f"  Saved state to: {path_eng_state}")
 
     # Summary
     print("\n" + "=" * 60)

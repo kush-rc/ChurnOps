@@ -1,0 +1,32 @@
+# ============================================================
+# Docker Compose — Full Stack (API + Frontend)
+# ============================================================
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: churnops-api
+    ports:
+      - "8000:8000"
+    environment:
+      - PYTHONUNBUFFERED=1
+    healthcheck:
+      test: ["CMD", "python", "-c", "import httpx; httpx.get('http://localhost:8000/health').raise_for_status()"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: churnops-frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      api:
+        condition: service_healthy
+    environment:
+      - VITE_API_URL=http://api:8000
