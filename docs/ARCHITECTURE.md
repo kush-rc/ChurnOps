@@ -169,6 +169,7 @@ These are the scripts you actually run to operate the pipeline.
 | `generate_8_domains.py` | Generates 1M+ realistic customers per domain using NumPy distributions | Once, to create the training dataset |
 | `run_training.py` | Trains all 6 models for a domain, logs to MLflow, saves preprocessors | Every time you retrain models |
 | `run_tuning.py` | Runs Optuna hyperparameter optimization | When you want to improve model performance |
+| `export_model.py` | Bundles the production model from MLflow into `models/production/` | Before deploying the application to production |
 | `test_inference.py` | End-to-end inference test with sample data | To verify the full prediction pipeline works |
 | `test_pipeline.py` | Tests the data → preprocess → features pipeline | To verify data processing is correct |
 | `orchestrate_all.ps1` | PowerShell script to run the full pipeline across all domains | Full automation — runs everything sequentially |
@@ -192,6 +193,7 @@ These are the scripts you actually run to operate the pipeline.
 | Subdirectory | Contents | Purpose |
 |---|---|---|
 | `models/preprocessors/` | 16 joblib files (8 domains × 2: `*_preprocessor.joblib` + `*_engineer.joblib`) | Fitted preprocessing pipelines (scalers, encoders) that must match training |
+| `models/production/` | Bundled MLflow model artifacts (e.g., `MLmodel`, `conda.yaml`, binaries) | Enables standalone deployment without a live MLflow tracking server |
 
 **Why save preprocessors?** At inference time, new data must be transformed the exact same way as training data. These files ensure consistency.
 

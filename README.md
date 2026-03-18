@@ -66,12 +66,18 @@ python scripts/run_training.py
 python scripts/run_tuning.py
 ```
 
-### 3. Start Backend API
+### 3. Export Model for Deployment
+Since this project uses a bundled model deployment strategy (no live MLflow tracking server required in production), export the trained model into the source code:
+```bash
+python export_model.py
+```
+
+### 4. Start Backend API
 ```bash
 $env:PYTHONPATH="."; uvicorn src.api.main:app --host 0.0.0.0 --port 8000
 ```
 
-### 4. Start Frontend
+### 5. Start Frontend
 ```bash
 cd frontend
 npm install
@@ -80,7 +86,7 @@ npm run dev
 
 Open **http://localhost:5173** in your browser.
 
-### 5. Docker (Alternative)
+### 6. Docker (Alternative)
 ```bash
 docker-compose up --build
 # API → http://localhost:8000
