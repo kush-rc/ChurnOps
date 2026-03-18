@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Routes, Route, NavLink, useLocation } from 'react-router-dom';
 import { useDomain } from './DomainContext';
-import { DOMAINS } from './api';
+import { DOMAINS, getHealthStatus } from './api';
 import Dashboard from './pages/Dashboard';
 import Predict from './pages/Predict';
 import ModelComparison from './pages/ModelComparison';
@@ -36,6 +36,24 @@ function App() {
     document.documentElement.setAttribute('data-theme', darkMode ? 'dark' : 'light');
     localStorage.setItem('churnops-theme', darkMode ? 'dark' : 'light');
   }, [darkMode]);
+
+  // System health state
+  const [systemStatus, setSystemStatus] = useState('checking');
+
+  useEffect(() => {
+    const checkHealth = async () => {
+      try {
+        const health = await getHealthStatus();
+        setSystemStatus(health.status === 'online' ? 'online' : 'offline');
+      } catch {
+        setSystemStatus('offline');
+      }
+    };
+
+    checkHealth();
+    const interval = setInterval(checkHealth, 5000); // Check every 5s
+    return () => clearInterval(interval);
+  }, []);
 
   const navItems = [
     { to: '/', icon: <LayoutDashboard size={18} />, label: 'Dashboard' },
@@ -105,9 +123,31 @@ function App() {
             <span>{darkMode ? 'Dark' : 'Light'}</span>
           </div>
 
-          <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.7rem', color: 'var(--accent-success)' }}>
-            <Zap size={10} fill="currentColor" />
-            <span>SYSTEM ACTIVE</span>
+          <div style={{ 
+            marginTop: 12, 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: 8, 
+            padding: '8px 12px',
+            borderRadius: 8,
+            background: systemStatus === 'online' ? 'rgba(16, 185, 129, 0.05)' : 'rgba(239, 68, 68, 0.05)',
+            border: `1px solid ${systemStatus === 'online' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)'}`,
+            fontSize: '0.65rem', 
+            fontWeight: 700,
+            color: systemStatus === 'online' ? 'var(--accent-success)' : 'var(--accent-danger)',
+            transition: 'all 0.3s ease'
+          }}>
+            <div style={{ 
+              width: 6, 
+              height: 6, 
+              borderRadius: '50%', 
+              background: 'currentColor',
+              boxShadow: systemStatus === 'online' ? '0 0 8px var(--accent-success)' : 'none',
+              animation: systemStatus === 'online' ? 'pulse 2s infinite' : 'none'
+            }} />
+            <span style={{ letterSpacing: '0.05em' }}>
+              {systemStatus === 'checking' ? 'SYNCING...' : `SYSTEM ${systemStatus.toUpperCase()}`}
+            </span>
           </div>
         </div>
       </aside>
