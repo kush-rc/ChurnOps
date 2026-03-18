@@ -33,6 +33,10 @@ def get_predictor(domain: str) -> ChurnPredictor:
     return predictors[domain]
 
 
+@router.get("/health")
+async def health_check():
+    return {"status": "healthy", "version": "1.0.0"}
+
 @router.post("/predict", response_model=PredictionResponse)
 async def predict_single(
     customer: CustomerFeatures,
