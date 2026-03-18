@@ -91,21 +91,18 @@ export default function Dashboard() {
 
       <div className="metrics-grid">
         <motion.div variants={itemVars} className="metric-card">
-          <div className="metric-icon" style={{ position: 'absolute', right: 20, top: 20, opacity: 0.1 }}><Users size={40} /></div>
           <div className="metric-label">Training Population</div>
           <div className="metric-value" style={{ color: 'var(--accent-blue)' }}>{det.customers}</div>
           <div className="metric-sub">Dataset: {det.file}</div>
         </motion.div>
         
         <motion.div variants={itemVars} className="metric-card">
-          <div className="metric-icon" style={{ position: 'absolute', right: 20, top: 20, opacity: 0.1 }}><Activity size={40} /></div>
           <div className="metric-label">Model Ensemble</div>
           <div className="metric-value" style={{ color: 'var(--accent-indigo)' }}>{det.models} Algorithms</div>
           <div className="metric-sub">Champion: XGBoost-Tuned</div>
         </motion.div>
 
         <motion.div variants={itemVars} className="metric-card">
-          <div className="metric-icon" style={{ position: 'absolute', right: 20, top: 20, opacity: 0.1 }}><Server size={40} /></div>
           <div className="metric-label">Inference Node</div>
           <div className="metric-value" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <span className={`status-dot ${health?.status === 'healthy' ? 'online' : 'offline'}`}></span>

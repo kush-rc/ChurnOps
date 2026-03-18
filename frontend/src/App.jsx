@@ -51,7 +51,6 @@ function App() {
       <aside className="sidebar">
         <div className="brand">
           <h1>
-            <Activity size={22} color="var(--accent-primary)" strokeWidth={2.5} />
             ChurnOps
           </h1>
         </div>
