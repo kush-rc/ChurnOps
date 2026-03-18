@@ -6,7 +6,6 @@ with JSON formatting for production and pretty formatting for development.
 """
 
 import sys
-from pathlib import Path
 
 from loguru import logger
 

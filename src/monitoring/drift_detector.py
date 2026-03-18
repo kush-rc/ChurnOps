@@ -14,7 +14,7 @@ from evidently.metric_preset import DataDriftPreset, TargetDriftPreset
 from evidently.report import Report
 from loguru import logger
 
-from src.utils.config import get_monitoring_config, get_dataset_config, get_path
+from src.utils.config import get_dataset_config, get_monitoring_config
 from src.utils.helpers import timer
 
 

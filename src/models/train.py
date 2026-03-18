@@ -5,7 +5,6 @@ Trains multiple ML models, logs to MLflow, and handles
 class imbalance with SMOTE/ADASYN.
 """
 
-from pathlib import Path
 from typing import Any
 
 import mlflow
@@ -13,15 +12,15 @@ import mlflow.sklearn
 import mlflow.xgboost
 import numpy as np
 import pandas as pd
-from imblearn.over_sampling import SMOTE, ADASYN, BorderlineSMOTE
+from imblearn.over_sampling import ADASYN, SMOTE, BorderlineSMOTE
 from loguru import logger
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
-from sklearn.model_selection import StratifiedKFold, cross_val_score, train_test_split
+from sklearn.model_selection import train_test_split
 from sklearn.neural_network import MLPClassifier
 
 from src.models.evaluate import ModelEvaluator
-from src.utils.config import get_model_config, get_training_config, get_config
+from src.utils.config import get_config, get_model_config, get_training_config
 from src.utils.helpers import timer
 
 
@@ -218,8 +217,8 @@ class ModelTrainer:
 
 
 if __name__ == "__main__":
+    from src.utils.config import get_dataset_config, get_path
     from src.utils.helpers import load_dataframe
-    from src.utils.config import get_path, get_dataset_config
 
     config = get_dataset_config()
     features_path = get_path("data_features") / f"{config['name']}_features.parquet"

@@ -5,17 +5,16 @@ Loads a trained model and makes predictions on new data.
 """
 
 from pathlib import Path
-from typing import Any
 
 import mlflow
 import numpy as np
 import pandas as pd
 from loguru import logger
 
-from src.utils.config import get_config, get_dataset_config
-from src.utils.helpers import timer
-from src.data.preprocess import DataPreprocessor
 from src.data.features import FeatureEngineer
+from src.data.preprocess import DataPreprocessor
+from src.utils.config import get_config
+from src.utils.helpers import timer
 
 
 class ChurnPredictor:
@@ -31,15 +30,15 @@ class ChurnPredictor:
         self.domain = domain
         self.model = None
         self.model_uri = model_uri
-        
+
         # Inference pipeline components
         self.preprocessor: DataPreprocessor | None = None
         self.engineer: FeatureEngineer | None = None
-        
+
         # SHAP caching (built lazily on first explain request)
         self._shap_explainer = None
         self._shap_baseline = None
-        
+
         self._load_pipeline()
 
     def _load_pipeline(self) -> None:
@@ -61,7 +60,7 @@ class ChurnPredictor:
                     logger.info(f"Loaded bundled model from: {bundled_path}")
                 except Exception as e:
                     logger.warning(f"Failed to load bundled model: {e}")
-            
+
             # Fallback to MLflow tracking server
             if not self.model:
                 client = mlflow.tracking.MlflowClient()
@@ -151,13 +150,13 @@ class ChurnPredictor:
         """Intelligently extract expected feature names from the model wrapper."""
         if not self.model or not hasattr(self.model, '_model_impl'):
             return None
-            
+
         impl = self.model._model_impl
-        
+
         # 1. Check for standard sklearn feature_names_in_
         if hasattr(impl, 'feature_names_in_'):
             return list(impl.feature_names_in_)
-            
+
         # 2. Check underlying sklearn_model or xgb_model
         for attr in ['sklearn_model', 'xgb_model']:
             if hasattr(impl, attr):
@@ -168,7 +167,7 @@ class ChurnPredictor:
                     return sub.get_booster().feature_names
                 if hasattr(sub, 'feature_names'):
                     return sub.feature_names
-        
+
         # 3. Fallback to engineer's training names
         return self.engineer.feature_names if self.engineer else None
 
@@ -176,20 +175,20 @@ class ChurnPredictor:
         """Run data through the full inference pipeline."""
         if self.preprocessor is None or self.engineer is None:
             raise RuntimeError("Pipeline state not loaded. Cannot process raw data.")
-            
+
         # 1. Preprocess (Imputes missing columns and cleans types)
         df_clean = self.preprocessor.preprocess(df)
-        
+
         # 2. Engineer features (Derived features, interactions, OHE)
         df_features = self.engineer.engineer_features(df_clean)
-        
+
         # Ensure column order matches training exactly and fill missing with 0
         expected_cols = self._extract_model_feature_names() or self.engineer.feature_names
-        
+
         # Reindex automatically adds missing columns (filled with 0) and drops extra ones,
         # while strictly enforcing the exact column order expected by the ML model.
         X = df_features.reindex(columns=expected_cols, fill_value=0)
-        
+
         # 3. Predict with robust fallback
         try:
             # First try with DataFrame to maintain feature names if supported
@@ -199,19 +198,19 @@ class ChurnPredictor:
             # Fallback to raw numpy array to bypass strict column name validation
             # while keeping the data in the exactly correct order.
             proba = self.predict_proba(X.to_numpy())
-            
+
         pred = (proba >= 0.5).astype(int)
-        
+
         return pred, proba
 
     def predict_single(self, features: dict) -> dict:
         """Predict churn for a single customer."""
         df = pd.DataFrame([features])
-        
+
         pred, proba = self.process_and_predict(df)
-        
+
         prediction = int(pred[0])
-        churn_prob = float(proba[0])
+        float(proba[0])
 
         return {
             "prediction": prediction,
@@ -226,14 +225,14 @@ class ChurnPredictor:
             return [{"feature": "Unknown", "shap_value": 0.0}]
 
         import shap
-        
+
         df = pd.DataFrame([features])
         df_clean = self.preprocessor.preprocess(df)
         df_features = self.engineer.engineer_features(df_clean)
-        
+
         expected_cols = self._extract_model_feature_names() or self.engineer.feature_names
         X = df_features.reindex(columns=expected_cols, fill_value=0)
-        
+
         # Extract the underlying XGBoost/sklearn model from the MLflow wrapper
         impl = self.model._model_impl
         underlying = None
@@ -243,7 +242,7 @@ class ChurnPredictor:
                 break
         if not underlying:
             underlying = impl
-            
+
         try:
             # ─── Strategy 1: Patch the XGBoost Booster directly ───
             # XGBoost >= 2.0 stores base_score as '[6.9498456E-1]' in the booster
@@ -251,36 +250,36 @@ class ChurnPredictor:
             # Fix: extract the booster, save to temp JSON, fix the string, reload.
             if hasattr(underlying, 'get_booster'):
                 import json
-                import tempfile
                 import os
-                
+                import tempfile
+
                 booster = underlying.get_booster()
-                
+
                 # Save the booster to a temp JSON file
                 tmp_path = os.path.join(tempfile.gettempdir(), '_shap_xgb_fix.json')
                 booster.save_model(tmp_path)
-                
-                with open(tmp_path, 'r') as f:
+
+                with open(tmp_path) as f:
                     model_json = json.load(f)
-                
+
                 # Fix the base_score string: '[6.9498456E-1]' -> '6.9498456E-1'
                 try:
                     bs = model_json['learner']['learner_model_param']['base_score']
                     if isinstance(bs, str) and ('[' in bs or ']' in bs):
                         model_json['learner']['learner_model_param']['base_score'] = bs.replace('[', '').replace(']', '')
-                        
+
                         with open(tmp_path, 'w') as f:
                             json.dump(model_json, f)
-                        
+
                         booster.load_model(tmp_path)
                         logger.info("Patched XGBoost base_score for SHAP compatibility")
                 except (KeyError, TypeError):
                     pass  # Not an XGBoost JSON format we expected
-                
-                # Use the patched booster directly with TreeExplainer 
+
+                # Use the patched booster directly with TreeExplainer
                 explainer = shap.TreeExplainer(booster)
                 shap_values = explainer.shap_values(X)
-                
+
                 # Handle multi-class output (list of arrays)
                 if isinstance(shap_values, list) and len(shap_values) == 2:
                     sv = shap_values[1][0]
@@ -288,31 +287,31 @@ class ChurnPredictor:
                     sv = shap_values[0] if shap_values.ndim == 2 else shap_values
                 else:
                     sv = shap_values[0]
-                    
+
                 if hasattr(sv, 'ndim') and sv.ndim > 1:
                     sv = sv[:, 1]
-                    
+
                 importances = [
                     {"feature": str(col), "shap_value": round(float(val), 4)}
-                    for col, val in zip(X.columns, sv)
+                    for col, val in zip(X.columns, sv, strict=False)
                 ]
             else:
                 # Non-XGBoost model: try TreeExplainer directly
                 explainer = shap.TreeExplainer(underlying)
                 shap_values = explainer.shap_values(X)
-                
+
                 if isinstance(shap_values, list) and len(shap_values) == 2:
                     sv = shap_values[1][0]
                 else:
                     sv = shap_values[0]
                     if hasattr(sv, 'ndim') and sv.ndim > 1:
                         sv = sv[:, 1]
-                        
+
                 importances = [
                     {"feature": str(col), "shap_value": round(float(val), 4)}
-                    for col, val in zip(X.columns, sv)
+                    for col, val in zip(X.columns, sv, strict=False)
                 ]
-                
+
         except Exception as e:
             logger.warning(f"TreeExplainer failed, falling back to PermutationExplainer: {e}")
             try:
@@ -323,16 +322,16 @@ class ChurnPredictor:
                     self._shap_baseline = pd.DataFrame([np.zeros(len(X.columns))], columns=X.columns)
                     self._shap_explainer = shap.Explainer(predict_fn, self._shap_baseline)
                     logger.info("Built and cached SHAP PermutationExplainer")
-                    
+
                 shap_values_obj = self._shap_explainer(X)
                 sv = shap_values_obj.values[0]
-                
+
                 if sv.ndim > 1:
                     sv = sv[:, 1]
-                    
+
                 importances = [
                     {"feature": str(col), "shap_value": round(float(val), 4)}
-                    for col, val in zip(X.columns, sv)
+                    for col, val in zip(X.columns, sv, strict=False)
                 ]
             except Exception as inner_e:
                 logger.error(f"Failed to generate SHAP values: {inner_e}")
@@ -340,11 +339,11 @@ class ChurnPredictor:
                 if hasattr(underlying, 'feature_importances_'):
                     importances = [
                         {"feature": str(col), "shap_value": round(float(imp), 4)}
-                        for col, imp in zip(X.columns, underlying.feature_importances_)
+                        for col, imp in zip(X.columns, underlying.feature_importances_, strict=False)
                     ]
                 else:
                     return [{"feature": "Unknown", "shap_value": 0.0}]
-                
+
         # Sort by absolute impact
         importances.sort(key=lambda x: abs(x["shap_value"]), reverse=True)
         return importances

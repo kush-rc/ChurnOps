@@ -5,14 +5,12 @@ Validates data quality using custom checks and Great Expectations.
 Ensures data integrity at every stage of the pipeline.
 """
 
-from pathlib import Path
 from typing import Any
 
-import numpy as np
 import pandas as pd
 from loguru import logger
 
-from src.utils.config import get_dataset_config, get_path
+from src.utils.config import get_dataset_config
 from src.utils.helpers import timer
 
 
@@ -131,9 +129,12 @@ class DataValidator:
         numerical = self.config.get("numerical_features", [])
         issues = []
         for col in numerical:
-            if col in df.columns and pd.api.types.is_numeric_dtype(df[col]):
-                if df[col].min() < -1e6 or df[col].max() > 1e9:
-                    issues.append(f"{col}: [{df[col].min()}, {df[col].max()}]")
+            if (
+                col in df.columns
+                and pd.api.types.is_numeric_dtype(df[col])
+                and (df[col].min() < -1e6 or df[col].max() > 1e9)
+            ):
+                issues.append(f"{col}: [{df[col].min()}, {df[col].max()}]")
         self._add_result(
             "Numerical values in reasonable range",
             len(issues) == 0,

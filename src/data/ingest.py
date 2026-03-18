@@ -5,13 +5,12 @@ Handles loading raw datasets from local files or downloading from Kaggle.
 Supports Telco, Bank, and E-commerce churn datasets.
 """
 
-from pathlib import Path
 
 import pandas as pd
 from loguru import logger
 
 from src.utils.config import get_config, get_dataset_config, get_path
-from src.utils.helpers import load_dataframe, save_dataframe, timer
+from src.utils.helpers import load_dataframe, timer
 
 
 @timer
@@ -57,7 +56,7 @@ def ingest_all_datasets() -> dict[str, pd.DataFrame]:
     Returns:
         Dictionary mapping dataset names to DataFrames.
     """
-    config = get_config()
+    get_config()
     datasets = {}
 
     for dataset_name in ["telco", "bank", "ecommerce"]:

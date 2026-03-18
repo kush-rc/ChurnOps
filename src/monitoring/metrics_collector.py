@@ -6,7 +6,6 @@ Exposes model and API metrics for Prometheus scraping.
 
 from prometheus_client import Counter, Gauge, Histogram, Info
 
-
 # ---- API Metrics ----
 REQUEST_COUNT = Counter(
     "api_request_total",

@@ -7,7 +7,6 @@ Handles alert rules and notifications for monitoring events.
 import json
 from datetime import datetime
 from pathlib import Path
-from typing import Any
 
 from loguru import logger
 
@@ -70,7 +69,7 @@ class AlertManager:
 
         alerts = []
         if filepath.exists():
-            with open(filepath, "r") as f:
+            with open(filepath) as f:
                 try:
                     alerts = json.load(f)
                 except json.JSONDecodeError:

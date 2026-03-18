@@ -1,6 +1,6 @@
 [build-system]
-requires = ["setuptools>=68.0", "wheel"]
-build-backend = "setuptools.backends._legacy:_Backend"
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
 
 [project]
 name = "churn-prediction-mlops"
@@ -45,7 +45,7 @@ select = [
     "SIM",  # flake8-simplify
     "TCH",  # flake8-type-checking
 ]
-ignore = ["E501"]  # line too long (handled by formatter)
+ignore = ["E501", "N803", "N806"]  # line too long, argument/variable name should be lowercase
 
 [tool.ruff.lint.isort]
 known-first-party = ["src"]

@@ -6,8 +6,8 @@ Handles model promotion from Staging to Production.
 """
 
 import mlflow
-from mlflow.tracking import MlflowClient
 from loguru import logger
+from mlflow.tracking import MlflowClient
 
 from src.utils.config import get_config
 from src.utils.helpers import timer

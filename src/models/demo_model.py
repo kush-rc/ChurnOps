@@ -8,8 +8,6 @@ Each domain gets a small RandomForest trained on realistic synthetic data
 so that predictions reflect actual learned patterns rather than random numbers.
 """
 
-import pickle
-from pathlib import Path
 from typing import Any
 
 import numpy as np
@@ -120,7 +118,7 @@ FORM_FIELD_MAP: dict[str, dict[str, str]] = {
 def _generate_synthetic(domain: str, n: int = 1000, seed: int = 42) -> tuple[pd.DataFrame, pd.Series]:
     """Generate a small realistic synthetic dataset for a domain."""
     rng = np.random.RandomState(seed)
-    schema = DOMAIN_SCHEMAS[domain]
+    DOMAIN_SCHEMAS[domain]
     data: dict[str, Any] = {}
 
     if domain == "telco":
@@ -357,7 +355,7 @@ class DemoPredictor:
 
         results = [
             {"feature": name, "importance": round(float(imp), 4)}
-            for name, imp in zip(feature_names, importances)
+            for name, imp in zip(feature_names, importances, strict=False)
         ]
         results.sort(key=lambda x: x["importance"], reverse=True)
         return results

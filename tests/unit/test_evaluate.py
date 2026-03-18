@@ -1,7 +1,5 @@
 """Unit tests for model evaluation."""
 
-import numpy as np
-import pytest
 from sklearn.ensemble import RandomForestClassifier
 
 from src.models.evaluate import ModelEvaluator

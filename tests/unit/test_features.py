@@ -1,7 +1,5 @@
 """Unit tests for feature engineering module."""
 
-import pandas as pd
-import pytest
 
 
 class TestFeatureEngineering:
@@ -9,8 +7,8 @@ class TestFeatureEngineering:
 
     def test_features_output_has_more_columns(self, sample_telco_data):
         """Verify feature engineering creates new columns."""
-        from src.data.preprocess import DataPreprocessor
         from src.data.features import FeatureEngineer
+        from src.data.preprocess import DataPreprocessor
 
         preprocessor = DataPreprocessor("telco")
         df_clean = preprocessor.preprocess(sample_telco_data)
@@ -22,8 +20,8 @@ class TestFeatureEngineering:
 
     def test_no_null_features(self, sample_telco_data):
         """Verify no null values in engineered features."""
-        from src.data.preprocess import DataPreprocessor
         from src.data.features import FeatureEngineer
+        from src.data.preprocess import DataPreprocessor
 
         preprocessor = DataPreprocessor("telco")
         df_clean = preprocessor.preprocess(sample_telco_data)

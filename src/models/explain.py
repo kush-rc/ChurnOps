@@ -33,9 +33,7 @@ class ModelExplainer:
         model_type = type(self.model).__name__
 
         try:
-            if model_type in ["XGBClassifier", "LGBMClassifier", "CatBoostClassifier"]:
-                self.explainer = shap.TreeExplainer(self.model)
-            elif model_type in ["RandomForestClassifier"]:
+            if model_type in ["XGBClassifier", "LGBMClassifier", "CatBoostClassifier"] or model_type in ["RandomForestClassifier"]:
                 self.explainer = shap.TreeExplainer(self.model)
             else:
                 # Use KernelExplainer for any other model
@@ -106,7 +104,7 @@ class ModelExplainer:
 
         # Create feature importance ranking
         importance = sorted(
-            zip(feature_names, values),
+            zip(feature_names, values, strict=False),
             key=lambda x: abs(x[1]),
             reverse=True,
         )

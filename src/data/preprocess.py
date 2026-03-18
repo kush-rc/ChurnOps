@@ -6,15 +6,16 @@ encoding, and scaling. Outputs clean Parquet files.
 """
 
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-import numpy as np
 import pandas as pd
 from loguru import logger
-from sklearn.preprocessing import LabelEncoder, StandardScaler, MinMaxScaler, RobustScaler
 
 from src.utils.config import get_dataset_config, get_path
-from src.utils.helpers import load_dataframe, save_dataframe, timer
+from src.utils.helpers import save_dataframe, timer
+
+if TYPE_CHECKING:
+    from sklearn.preprocessing import LabelEncoder
 
 
 class DataPreprocessor:
@@ -50,7 +51,7 @@ class DataPreprocessor:
             for col in self.config.get("numerical_features", []):
                 if col != target and col not in df.columns:
                     df[col] = 0.0
-            # Add missing categorical features with "Unknown" 
+            # Add missing categorical features with "Unknown"
             for col in self.config.get("categorical_features", []):
                 if col != target and col not in df.columns:
                     df[col] = "Unknown"
@@ -95,10 +96,9 @@ class DataPreprocessor:
         target = self.config["target"]
         positive_label = self.config.get("target_positive_label")
 
-        if target in df.columns:
-            if positive_label is not None and df[target].dtype == object:
-                df[target] = (df[target] == positive_label).astype(int)
-                logger.info(f"Encoded target '{target}': '{positive_label}' → 1, rest → 0")
+        if target in df.columns and positive_label is not None and df[target].dtype == object:
+            df[target] = (df[target] == positive_label).astype(int)
+            logger.info(f"Encoded target '{target}': '{positive_label}' → 1, rest → 0")
 
         return df
 
@@ -126,33 +126,31 @@ class DataPreprocessor:
 
         # Numerical: fill with median/mean
         for col in numerical:
-            if col in df.columns:
-                if df[col].isnull().any() or not self._is_fit:
-                    if self._is_fit:
-                        if strategy == "median":
-                            self.imputation_values[col] = df[col].median()
-                        elif strategy == "mean":
-                            self.imputation_values[col] = df[col].mean()
-                        elif strategy == "drop":
-                            pass # Handled differently, but let's default to median
-                            self.imputation_values[col] = df[col].median()
-                    
-                    if col in self.imputation_values and not pd.isna(self.imputation_values[col]):
-                        df[col] = df[col].fillna(self.imputation_values[col])
-                    elif strategy == "drop" and self._is_fit:
-                        df = df.dropna(subset=[col])
+            if col in df.columns and (df[col].isnull().any() or not self._is_fit):
+                if self._is_fit:
+                    if strategy == "median":
+                        self.imputation_values[col] = df[col].median()
+                    elif strategy == "mean":
+                        self.imputation_values[col] = df[col].mean()
+                    elif strategy == "drop":
+                        pass # Handled differently, but let's default to median
+                        self.imputation_values[col] = df[col].median()
+
+                if col in self.imputation_values and not pd.isna(self.imputation_values[col]):
+                    df[col] = df[col].fillna(self.imputation_values[col])
+                elif strategy == "drop" and self._is_fit:
+                    df = df.dropna(subset=[col])
 
         # Categorical: fill with mode
         for col in categorical:
-            if col in df.columns:
-                if df[col].isnull().any() or not self._is_fit:
-                    if self._is_fit:
-                        mode_vals = df[col].mode()
-                        if len(mode_vals) > 0:
-                            self.imputation_values[col] = mode_vals[0]
-                    
-                    if col in self.imputation_values and not pd.isna(self.imputation_values[col]):
-                        df[col] = df[col].fillna(self.imputation_values[col])
+            if col in df.columns and (df[col].isnull().any() or not self._is_fit):
+                if self._is_fit:
+                    mode_vals = df[col].mode()
+                    if len(mode_vals) > 0:
+                        self.imputation_values[col] = mode_vals[0]
+
+                if col in self.imputation_values and not pd.isna(self.imputation_values[col]):
+                    df[col] = df[col].fillna(self.imputation_values[col])
 
         missing_after = df.isnull().sum().sum()
         logger.info(f"Missing values after: {missing_after}")

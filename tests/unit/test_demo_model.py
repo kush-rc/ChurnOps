@@ -1,7 +1,8 @@
 """Unit tests for demo model predictions."""
 
 import pytest
-from src.models.demo_model import DemoPredictor, DOMAIN_SCHEMAS
+
+from src.models.demo_model import DOMAIN_SCHEMAS, DemoPredictor
 
 
 class TestDemoPredictor:

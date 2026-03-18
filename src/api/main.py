@@ -13,7 +13,6 @@ from prometheus_client import make_asgi_app
 
 from src.api.routes import health, model_info, monitoring, predictions
 from src.utils.config import get_config
-from src.models.predict import ChurnPredictor
 
 
 @asynccontextmanager
@@ -24,7 +23,7 @@ async def lifespan(app: FastAPI):
         logger.info("✅ API is ready.")
     except Exception as e:
         logger.error(f"Error during API startup: {e}")
-        
+
     yield
     # Shutdown: cleanup
     logger.info("🛑 Shutting down API...")

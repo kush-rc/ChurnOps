@@ -10,10 +10,16 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 from loguru import logger
-from sklearn.preprocessing import LabelEncoder, OneHotEncoder, StandardScaler, MinMaxScaler, RobustScaler
+from sklearn.preprocessing import (
+    LabelEncoder,
+    MinMaxScaler,
+    OneHotEncoder,
+    RobustScaler,
+    StandardScaler,
+)
 
 from src.utils.config import get_dataset_config, get_path
-from src.utils.helpers import load_dataframe, save_dataframe, timer
+from src.utils.helpers import save_dataframe, timer
 
 
 class FeatureEngineer:
@@ -60,7 +66,7 @@ class FeatureEngineer:
         df = self._scale_numericals(df)
 
         self._is_fit = True
-        
+
         self.feature_names = [c for c in df.columns if c != self.config["target"]]
         logger.info(f"Output shape: {df.shape}")
         logger.info(f"Total features: {len(self.feature_names)}")
@@ -202,11 +208,11 @@ class FeatureEngineer:
                         try:
                             # Fit and get bin edges
                             binned, edges = pd.qcut(df[col], q=4, labels=["Q1", "Q2", "Q3", "Q4"], duplicates="drop", retbins=True)
-                            
+
                             # Ensure outer edges cover everything during inference
                             edges[0] = -np.inf
                             edges[-1] = np.inf
-                            
+
                             self.bin_edges[col] = edges
                             df[f"{col}_bin"] = binned.astype(str)
                         except Exception:
@@ -216,7 +222,7 @@ class FeatureEngineer:
                     if col in self.bin_edges:
                         edges = self.bin_edges[col]
                         labels = ["Q1", "Q2", "Q3", "Q4"][:len(edges)-1]
-                        
+
                         df[f"{col}_bin"] = pd.cut(df[col], bins=edges, labels=labels, include_lowest=True).astype(str)
 
         return df
@@ -224,7 +230,7 @@ class FeatureEngineer:
     def _encode_categoricals(self, df: pd.DataFrame) -> pd.DataFrame:
         """Encode categorical features based on config strategy."""
         strategy = self.preprocessing_config.get("encode_strategy", "onehot")
-        
+
         if not self._is_fit:
             categorical = [c for c in df.select_dtypes(include=["object", "category"]).columns
                            if c != self.config["target"]]
@@ -238,7 +244,7 @@ class FeatureEngineer:
 
         if not categorical:
             return df
-            
+
         # Ensure all expected categorical columns exist during inference
         if self._is_fit:
             for col in categorical:
@@ -256,9 +262,9 @@ class FeatureEngineer:
                     le = self.label_encoders.get(col)
                     if le:
                         known_classes = set(le.classes_)
-                        processed_col = df[col].astype(str).map(lambda s: s if s in known_classes else le.classes_[0])
+                        processed_col = df[col].astype(str).map(lambda s, kc=known_classes, def_val=le.classes_[0]: s if s in kc else def_val)
                         df[col] = le.transform(processed_col)
-                    
+
             logger.info(f"Label encoded {len(categorical)} columns")
 
         elif strategy == "onehot":
@@ -268,7 +274,7 @@ class FeatureEngineer:
                 encoded = self.ohe.fit_transform(df[categorical].astype(str))
             else:
                 encoded = self.ohe.transform(df[categorical].astype(str))
-                
+
             df = df.drop(columns=[c for c in categorical if c in df.columns])
             df = pd.concat([df, encoded], axis=1)
             logger.info(f"One-hot encoded {len(categorical)} columns → {len(df.columns)} total")
@@ -292,18 +298,18 @@ class FeatureEngineer:
                 self.scaler = MinMaxScaler()
             elif strategy == "robust":
                 self.scaler = RobustScaler()
-                
+
             if self.scaler:
                 # Use fitted feature names if available to ensure correct order
                 scaler_cols = getattr(self.scaler, "feature_names_in_", numerical)
                 if isinstance(scaler_cols, np.ndarray):
                     scaler_cols = scaler_cols.tolist()
-                
+
                 # Ensure columns exist in DataFrame
                 for col in scaler_cols:
                     if col not in df.columns:
                         df[col] = 0
-                        
+
                 df[scaler_cols] = self.scaler.fit_transform(df[scaler_cols])
                 logger.info(f"Scaled {len(scaler_cols)} numerical features ({strategy})")
         else:

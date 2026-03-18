@@ -1,7 +1,5 @@
 """Unit tests for data ingestion module."""
 
-import pandas as pd
-import pytest
 
 
 class TestDataIngest:

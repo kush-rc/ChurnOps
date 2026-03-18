@@ -4,13 +4,10 @@ Performance Tracker Module
 Tracks model performance metrics over time using a sliding window.
 """
 
-import json
 from collections import deque
 from datetime import datetime
-from pathlib import Path
 from typing import Any
 
-import numpy as np
 from loguru import logger
 
 from src.utils.config import get_monitoring_config
@@ -59,10 +56,10 @@ class PerformanceTracker:
         preds = list(self.predictions)[-len(actuals_available):]
         binary_preds = [1 if p >= 0.5 else 0 for p in preds]
 
-        tp = sum(1 for p, a in zip(binary_preds, actuals_available) if p == 1 and a == 1)
-        tn = sum(1 for p, a in zip(binary_preds, actuals_available) if p == 0 and a == 0)
-        fp = sum(1 for p, a in zip(binary_preds, actuals_available) if p == 1 and a == 0)
-        fn = sum(1 for p, a in zip(binary_preds, actuals_available) if p == 0 and a == 1)
+        tp = sum(1 for p, a in zip(binary_preds, actuals_available, strict=False) if p == 1 and a == 1)
+        tn = sum(1 for p, a in zip(binary_preds, actuals_available, strict=False) if p == 0 and a == 0)
+        fp = sum(1 for p, a in zip(binary_preds, actuals_available, strict=False) if p == 1 and a == 0)
+        fn = sum(1 for p, a in zip(binary_preds, actuals_available, strict=False) if p == 0 and a == 1)
 
         total = tp + tn + fp + fn
         accuracy = (tp + tn) / total if total > 0 else 0
@@ -87,7 +84,7 @@ class PerformanceTracker:
             return {"degraded": False, "reason": "insufficient_data"}
 
         alerts = []
-        for metric, threshold_key in [
+        for metric, _threshold_key in [
             ("accuracy", "accuracy_drop_threshold"),
             ("f1", "f1_drop_threshold"),
         ]:

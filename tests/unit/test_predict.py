@@ -1,6 +1,5 @@
 """Unit tests for prediction module."""
 
-import pytest
 from src.models.demo_model import DemoPredictor
 
 

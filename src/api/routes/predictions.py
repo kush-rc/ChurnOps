@@ -4,7 +4,7 @@ import io
 from datetime import datetime
 
 import pandas as pd
-from fastapi import APIRouter, HTTPException, Query, Request, UploadFile, File
+from fastapi import APIRouter, File, HTTPException, Query, Request, UploadFile
 from loguru import logger
 
 from src.api.schemas import (
@@ -58,7 +58,7 @@ async def predict_single(
         )
     except Exception as e:
         logger.exception(f"Prediction error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @router.post("/predict/batch", response_model=BatchPredictionResponse)
@@ -72,8 +72,8 @@ async def predict_batch(
     """
     try:
         predictor = get_predictor(domain)
-        
-        # We could optimize this by batching the dataframe, but for now 
+
+        # We could optimize this by batching the dataframe, but for now
         # we'll keep the loop for simplicity given the schema validation.
         predictions = []
         for customer in request.customers:
@@ -97,7 +97,7 @@ async def predict_batch(
         )
     except Exception as e:
         logger.exception(f"Batch prediction error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @router.post("/explain", response_model=ExplanationResponse)
@@ -108,14 +108,14 @@ async def explain_prediction(
     """Get feature importance explanation for a single prediction.
 
     Returns the prediction along with SHAP-like feature importances.
-    Currently returns dummy importances until SHAP is fully integrated 
+    Currently returns dummy importances until SHAP is fully integrated
     with the new MLflow pipeline.
     """
     try:
         features = customer.model_dump(exclude_none=True)
         predictor = get_predictor(domain)
         result = predictor.predict_single(features)
-        
+
         # Compute exact SHAP values using the trained MLflow model
         importances = predictor.explain_single(features)
 
@@ -139,12 +139,12 @@ async def explain_prediction(
         )
     except Exception as e:
         logger.exception(f"Explanation error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @router.post("/predict/upload", response_model=BatchUploadResponse)
 async def predict_upload(
-    file: UploadFile = File(...),
+    file: UploadFile = File(...),  # noqa: B008
     domain: str = Query("telco", description="Industry domain for prediction"),
 ):
     """Upload a CSV file and run batch churn predictions.
@@ -226,4 +226,4 @@ async def predict_upload(
         raise
     except Exception as e:
         logger.exception(f"Batch upload error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e

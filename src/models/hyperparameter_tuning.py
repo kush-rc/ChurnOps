@@ -6,15 +6,12 @@ Uses Optuna for Bayesian hyperparameter optimization.
 
 from typing import Any
 
-import mlflow
 import numpy as np
 import optuna
-import pandas as pd
 from loguru import logger
 from sklearn.model_selection import StratifiedKFold, cross_val_score
 
-from src.models.evaluate import ModelEvaluator
-from src.utils.config import get_config, get_model_config, get_training_config
+from src.utils.config import get_model_config, get_training_config
 from src.utils.helpers import timer
 
 
