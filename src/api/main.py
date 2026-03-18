@@ -59,6 +59,10 @@ def create_app() -> FastAPI:
     metrics_app = make_asgi_app()
     app.mount("/metrics", metrics_app)
 
+    @app.get("/")
+    async def root():
+        return {"message": "ChurnOps API is running. Visit /docs for documentation."}
+
     # Include routers
     app.include_router(health.router, tags=["Health"])
     app.include_router(predictions.router, prefix="/api/v1", tags=["Predictions"])
