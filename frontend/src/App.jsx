@@ -44,7 +44,7 @@ function App() {
     const checkHealth = async () => {
       try {
         const health = await getHealthStatus();
-        setSystemStatus(health.status === 'online' ? 'online' : 'offline');
+        setSystemStatus(health.status === 'online' || health.status === 'healthy' ? 'online' : 'offline');
       } catch {
         setSystemStatus('offline');
       }

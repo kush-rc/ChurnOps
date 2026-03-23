@@ -85,7 +85,7 @@ export default function Dashboard() {
     >
       <div className="page-header">
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
-          <Zap size={24} color="var(--accent-blue)" fill="var(--accent-blue)" />
+          <Zap size={24} color="var(--text-primary)" fill="var(--text-primary)" />
           <h2 style={{ margin: 0 }}>ML Intelligence Center</h2>
         </div>
         <p>Operational control for churn predictive modeling across 8 industries.</p>
